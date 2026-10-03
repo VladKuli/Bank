@@ -1,0 +1,14 @@
+CREATE ROLE bank_admin WITH LOGIN PASSWORD 'admin' CREATEDB;
+
+CREATE DATABASE bank OWNER bank_admin;
+CREATE DATABASE bank_test OWNER bank_admin;
+
+\connect bank
+
+CREATE EXTENSION IF NOT EXISTS hstore WITH SCHEMA pg_catalog;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+\connect bank_test
+
+CREATE EXTENSION IF NOT EXISTS hstore WITH SCHEMA pg_catalog;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
