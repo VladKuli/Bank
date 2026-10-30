@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/shell :: head('Digital banking')}"></head>
+<body class="customer-auth">
+  <main class="auth-layout">
+    <section class="auth-story">
+      <a class="auth-brand" href="/login/client"><span class="auth-brand-mark">N</span><span>NordBank<small>PERSONAL BANKING</small></span></a>
+      <div class="auth-story-content"><span class="auth-overline">A clearer way to bank</span><h1>Your money,<br>in good hands.</h1><p>Secure everyday banking, thoughtful service, and a little more clarity.</p><div class="auth-illustration" aria-hidden="true"><span class="auth-arc"></span><span class="auth-coin">N</span><span class="auth-line auth-line-one"></span><span class="auth-line auth-line-two"></span></div></div>
+      <div class="auth-story-foot"><span>Protected with secure sign in</span><span>© NORDBANK</span></div>
+    </section>
+    <section class="auth-panel">
+      <a class="auth-brand mobile-brand" href="/login/client"><span class="auth-brand-mark">N</span><span>NordBank<small>PERSONAL BANKING</small></span></a>
+      <div class="auth-form-wrap">
+        <span class="auth-overline">WELCOME BACK</span><h2>Sign in to your account</h2><p class="auth-subtitle">Enter your email and password to continue.</p>
+        <div class="auth-alert" role="alert" th:if="${param.error}">We couldn’t sign you in with those details. Please try again.</div>
+        <div class="auth-success" th:if="${param.registered}">Your account is ready. Sign in to get started.</div>
+        <div class="auth-success" th:if="${param.logout}">You have signed out.</div>
+        <form class="auth-form" method="post" th:action="@{/login/client}">
+          <label class="auth-field"><span>Email address</span><input type="email" name="username" autocomplete="username" required autofocus placeholder="you@example.com"></label>
+          <label class="auth-field"><span>Password</span><span class="auth-password"><input id="customerPassword" type="password" name="password" autocomplete="current-password" required placeholder="Your password"><button type="button" data-password-toggle="customerPassword">Show</button></span></label>
+          <p class="auth-muted">For your security, always sign out when using a shared device.</p>
+          <button class="auth-submit" type="submit">Sign in securely <span aria-hidden="true">→</span></button>
+        </form>
+        <p class="auth-register">New to NordBank? <a th:href="@{/register}">Create an account</a></p>
+      </div>
+      <footer class="auth-panel-foot"><span>Secure customer access</span><a th:href="@{/login/employee}">Employee sign in</a></footer>
+    </section>
+  </main>
+  <script src="/js/auth.js" defer></script>
+</body>
+</html>

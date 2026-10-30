@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101f3e">
+  <meta name="description" content="NordBank staff workspace for secure client and account services.">
+  <title>NordBank | Staff workspace</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/nordbank.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="NordBank home">
+        <span class="brand-mark" aria-hidden="true">N</span>
+        <span><strong>NordBank</strong><small>CLIENT SERVICES</small></span>
+      </a>
+
+      <div class="side-label">WORKSPACE</div>
+      <nav class="side-nav" aria-label="Main navigation">
+        <a class="nav-item" href="/employee/cards"><span class="nav-icon" aria-hidden="true">▣</span><span>Operations</span></a>
+        <a class="nav-item active" href="#overview" data-nav="overview"><span class="nav-icon" aria-hidden="true">⌂</span><span>Overview</span></a>
+        <a class="nav-item" href="#clients" data-nav="clients"><span class="nav-icon">◫</span><span>Clients</span><span class="nav-count" id="navCount">—</span></a>
+        <a class="nav-item" href="#staff" data-nav="staff" id="staffNav" hidden><span class="nav-icon">♙</span><span>Team access</span></a>
+      </nav>
+
+      <div class="side-bottom">
+        <form action="/logout" method="post" id="logoutForm">
+          <input type="hidden" name="_csrf" id="logoutCsrf">
+          <button class="profile-button" id="profileMenuButton" type="button" aria-haspopup="dialog" aria-controls="profileMenuDialog" aria-expanded="false"><span class="avatar">ST</span><span class="profile-copy"><strong>Staff member</strong><small>Secure workspace</small></span></button>
+          <button type="submit" hidden tabindex="-1" aria-hidden="true">Sign out</button>
+        </form>
+      </div>
+    </aside>
+
+    <main class="main-content" id="workspace">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>NordBank</span><i>/</i><strong id="breadcrumbPage">Overview</strong></div>
+        <div class="topbar-right"><span class="live-pill">STAFF WORKSPACE</span><span class="top-divider"></span><time id="clock" class="clock"></time></div>
+      </header>
+
+      <div id="overviewView">
+        <section class="welcome-panel">
+          <div class="welcome-copy"><div class="eyebrow"><span class="eyebrow-line"></span> SECURE BANKING WORKSPACE</div><h1>Good service starts<br>with a <em>clear picture.</em></h1><p>Manage client relationships and account activity from one considered workspace.</p><div class="welcome-actions"><button class="button button-primary" type="button" data-open-clients>Explore clients <span aria-hidden="true">→</span></button><button class="button button-on-dark" type="button" id="overviewNewClient">Add a client <span aria-hidden="true">＋</span></button></div></div>
+          <div class="welcome-seal" aria-hidden="true"><span class="seal-orbit"></span><span class="seal-mark">N</span><span class="seal-caption">NORDBANK<br>STAFF PORTAL</span></div>
+          <div class="welcome-foot"><span><i class="live-dot"></i> Protected staff session</span><span>EUROPE · KYIV</span></div>
+        </section>
+        <section class="overview-section" aria-label="Portfolio overview">
+          <div class="section-heading"><div><span class="section-kicker">PORTFOLIO SNAPSHOT</span><h2>Your workspace at a glance</h2></div><button class="button button-quiet button-small" id="refreshOverview" type="button">Refresh overview <span aria-hidden="true">↻</span></button></div>
+          <div class="overview-metrics" id="overviewMetrics" aria-live="polite">
+            <article class="metric-card"><span class="metric-label">REGISTERED CLIENTS</span><strong class="metric-value">—</strong><span class="metric-note">Loading portfolio data</span></article>
+            <article class="metric-card"><span class="metric-label">OPEN ACCOUNTS</span><strong class="metric-value">—</strong><span class="metric-note">Across all currencies</span></article>
+            <article class="metric-card"><span class="metric-label">CLIENT BALANCES</span><strong class="metric-value metric-currency">—</strong><span class="metric-note">Shown by account currency</span></article>
+          </div>
+        </section>
+        <section class="overview-lower">
+          <div class="results-column"><div class="section-heading"><div><span class="section-kicker">RELATIONSHIPS</span><h2>Recently registered clients</h2></div><button class="text-link" type="button" data-open-clients>View directory <span aria-hidden="true">→</span></button></div><div class="results-card"><div class="table-head recent-table-head"><span>CLIENT</span><span>CONTACT</span><span>STATUS</span></div><div id="recentClients" class="client-results"><div class="loading-shimmer"></div><div class="loading-shimmer"></div></div></div></div>
+          <aside class="overview-aside"><div class="aside-heading"><span class="section-kicker">QUICK ACCESS</span><span class="aside-mark" aria-hidden="true">✳</span></div><h3>Thoughtful service,<br>made simpler.</h3><p>Open a client profile to review accounts, record a transaction, or see recent ledger activity.</p><button class="aside-link" type="button" data-open-clients>Go to client directory <span aria-hidden="true">↗</span></button><div class="aside-rule"></div><div class="aside-note"><span class="aside-note-icon" aria-hidden="true">⌁</span><span><strong>Every action is recorded</strong><small>Account changes are validated and stored in the ledger.</small></span></div></aside>
+        </section>
+        <footer class="page-footer"><span>NORDBANK · INTERNAL BANKING PLATFORM</span><span>EDUCATIONAL SIMULATION</span></footer>
+      </div>
+
+      <div id="clientsView" hidden>
+      <section class="page-heading">
+        <div>
+          <div class="eyebrow"><span class="eyebrow-line"></span> CLIENT SERVICES</div>
+          <h1>Client <span>directory</span></h1>
+          <p>Find a client profile and take care of their banking needs.</p>
+        </div>
+        <button class="button button-primary" id="newClientButton" type="button"><span class="button-plus">＋</span> New client</button>
+      </section>
+
+      <section class="search-panel" aria-label="Client search">
+        <div class="search-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.5 15.5 4.2 4.2"/></svg></div>
+        <div class="search-field"><label for="searchInput">SEARCH CLIENTS</label><input id="searchInput" type="search" autocomplete="off" placeholder="Name, personal code, phone or email"><div class="search-hint">Press <kbd>↵</kbd> to search</div></div>
+        <button class="button button-search" id="searchButton" type="button">Search <span>→</span></button>
+      </section>
+
+      <section class="content-grid">
+        <div class="results-column">
+          <div class="section-heading">
+            <div><span class="section-kicker">DIRECTORY</span><h2>Client directory <span class="result-total" id="resultCount"></span></h2></div>
+            <div class="sort-label"><span class="sort-dot"></span> Sorted by name</div>
+          </div>
+          <div class="results-card">
+            <div class="table-head client-table-head"><span>CLIENT</span><span>CONTACT</span><span>STATUS</span></div>
+            <div id="clientResults" class="client-results">
+              <div class="empty-state search-empty"><span class="empty-mark"><i></i></span><strong>Start with a search</strong><p>Search by name, personal code, phone number, or email to open a client profile.</p></div>
+            </div>
+          </div>
+          <div class="results-foot"><span id="searchMeta"></span></div>
+        </div>
+      </section>
+
+      <footer class="page-footer"><span>NORDBANK <i>·</i> INTERNAL BANKING PLATFORM</span></footer>
+      </div>
+
+      <div id="staffView" hidden>
+        <section class="page-heading">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-line"></span> ACCESS MANAGEMENT</div>
+            <h1>Staff <span>directory</span></h1>
+            <p>Manage employee access to the banking workspace.</p>
+          </div>
+          <button class="button button-primary" id="newEmployeeButton" type="button"><span class="button-plus">＋</span> Add employee</button>
+        </section>
+
+        <section class="staff-section" aria-label="Staff directory">
+          <div class="section-heading">
+            <div><span class="section-kicker">EMPLOYEE ACCESS</span><h2>Team members <span class="result-total" id="employeeCount"></span></h2></div>
+            <button class="button button-quiet button-small" id="refreshEmployeesButton" type="button">Refresh</button>
+          </div>
+          <div class="results-card">
+            <div class="table-head employee-table-head"><span>EMPLOYEE</span><span>ROLE</span><span>STATUS</span><span>CREATED</span><span></span></div>
+            <div id="employeeResults" class="employee-results"></div>
+          </div>
+          <div class="results-foot"><span><span class="foot-dot"></span> Changes take effect immediately</span><span>Passwords are set when an employee is created</span></div>
+        </section>
+        <footer class="page-footer"><span>NORDBANK <i>·</i> INTERNAL BANKING PLATFORM</span></footer>
+      </div>
+    </main>
+  </div>
+
+  <dialog class="modal profile-menu-modal" id="profileMenuDialog" aria-labelledby="profileMenuTitle">
+    <div class="modal-form">
+      <div class="modal-head"><div><span class="section-kicker">YOUR WORKSPACE</span><h2 id="profileMenuTitle">Sign out?</h2></div><button class="icon-button" type="button" data-close="profileMenuDialog" aria-label="Close">×</button></div>
+      <p class="modal-intro">End your staff session.</p>
+      <div class="profile-menu-choices">
+        <button class="profile-menu-choice profile-menu-signout" id="profileSignOutButton" type="button"><span class="profile-choice-icon" aria-hidden="true">↗</span><span><strong>Sign out</strong><small>End your staff session</small></span><span class="profile-choice-arrow" aria-hidden="true">→</span></button>
+      </div>
+      <div class="modal-actions"><button class="button button-quiet" type="button" data-close="profileMenuDialog">Continue working</button></div>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="clientModal" aria-labelledby="clientModalTitle">
+    <form id="clientForm" class="modal-form">
+      <div class="modal-head"><div><span class="section-kicker">NEW PROFILE</span><h2 id="clientModalTitle">Add a client</h2></div><button class="icon-button" type="button" data-close="clientModal" aria-label="Close">×</button></div>
+      <p class="modal-intro">Create a secure client profile. Required fields are marked.</p>
+      <div class="form-grid">
+        <label class="field"><span>First name <b>*</b></span><input name="firstName" required maxlength="100" autocomplete="given-name" placeholder="e.g. Alex"></label>
+        <label class="field"><span>Last name <b>*</b></span><input name="lastName" required maxlength="100" autocomplete="family-name" placeholder="e.g. Morgan"></label>
+        <label class="field field-full"><span>Personal code <b>*</b></span><input name="personalCode" required maxlength="32" autocomplete="off" placeholder="Unique identification code"></label>
+        <label class="field"><span>Phone</span><input name="phone" maxlength="32" autocomplete="tel" placeholder="Optional"></label>
+        <label class="field"><span>Email</span><input name="email" type="email" maxlength="254" autocomplete="email" placeholder="Optional"></label>
+      </div>
+      <div class="form-error" id="clientFormError" role="alert"></div>
+      <div class="modal-actions"><button class="button button-quiet" type="button" data-close="clientModal">Cancel</button><button class="button button-primary" type="submit">Create profile <span>→</span></button></div>
+    </form>
+  </dialog>
+
+  <dialog class="modal" id="employeeModal" aria-labelledby="employeeModalTitle">
+    <form id="employeeForm" class="modal-form">
+      <div class="modal-head"><div><span class="section-kicker">STAFF ACCESS</span><h2 id="employeeModalTitle">Add an employee</h2></div><button class="icon-button" type="button" data-close="employeeModal" aria-label="Close">×</button></div>
+      <p class="modal-intro">Create a staff login. Passwords must be 12 to 72 characters.</p>
+      <div class="form-grid">
+        <label class="field field-full"><span>Username <b>*</b></span><input name="username" required maxlength="100" autocomplete="off" placeholder="e.g. alex.morgan"></label>
+        <label class="field field-full"><span>Temporary password <b>*</b></span><input name="password" type="password" required minlength="12" maxlength="72" autocomplete="new-password" placeholder="At least 12 characters"></label>
+        <label class="field field-full"><span>Role</span><select name="role"><option value="OPERATOR">Operator</option><option value="MANAGER">Manager</option><option value="ADMIN">Administrator</option></select></label>
+      </div>
+      <div class="form-error" id="employeeFormError" role="alert"></div>
+      <div class="modal-actions"><button class="button button-quiet" type="button" data-close="employeeModal">Cancel</button><button class="button button-primary" type="submit">Create employee</button></div>
+    </form>
+  </dialog>
+
+  <dialog class="modal modal-wide" id="profileModal" aria-labelledby="profileName">
+    <div class="profile-modal-content">
+      <div class="profile-modal-head"><div class="profile-ident"><span id="profileAvatar" class="profile-avatar">AM</span><div><span class="section-kicker">CLIENT PROFILE</span><h2 id="profileName">—</h2><p id="profileCode" class="mono-text">—</p></div></div><button class="icon-button" type="button" data-close="profileModal" aria-label="Close">×</button></div>
+      <div class="profile-meta" id="profileMeta"></div>
+      <section class="verification-action" id="verificationAction" hidden>
+        <div><strong>Identity verification pending</strong><p>Approve this profile after completing the required identity checks.</p></div>
+        <button class="button button-primary button-small" id="approveVerificationButton" type="button">Approve verification</button>
+      </section>
+      <div class="profile-section-head"><div><span class="section-kicker">BANKING</span><h3>Accounts <span id="accountCount" class="result-total"></span></h3></div><button class="button button-small button-primary" id="openAccountButton" type="button"><span>＋</span> Open account</button></div>
+      <div id="accountList" class="account-list"></div>
+      <div class="profile-bottom-note"><span class="foot-dot"></span> Financial actions are validated and recorded in the operation history.</div>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="openAccountModal" aria-labelledby="openAccountTitle">
+    <form id="openAccountForm" class="modal-form">
+      <div class="modal-head"><div><span class="section-kicker">CLIENT BANKING</span><h2 id="openAccountTitle">Open an account</h2></div><button class="icon-button" type="button" data-close="openAccountModal" aria-label="Close">×</button></div>
+      <p class="modal-intro">Choose the account type and base currency.</p>
+      <div class="form-grid">
+        <label class="field field-full"><span>Account type</span><select name="type"><option value="CURRENT">Current account</option><option value="SAVINGS">Savings account</option></select></label>
+        <label class="field field-full"><span>Currency</span><select name="currency"><option value="EUR">EUR · Euro</option><option value="USD">USD · US Dollar</option><option value="GBP">GBP · Pound sterling</option></select></label>
+      </div>
+      <div class="form-error" id="accountFormError" role="alert"></div>
+      <div class="modal-actions"><button class="button button-quiet" type="button" data-close="openAccountModal">Cancel</button><button class="button button-primary" type="submit">Open account <span>→</span></button></div>
+    </form>
+  </dialog>
+
+  <dialog class="modal modal-wide" id="accountModal" aria-labelledby="accountHeading">
+    <div class="account-modal-content">
+      <div class="modal-head"><div><span class="section-kicker">ACCOUNT DETAILS</span><h2 id="accountHeading">Account</h2></div><button class="icon-button" type="button" data-close="accountModal" aria-label="Close">×</button></div>
+      <div id="accountSummary" class="account-summary"></div>
+      <div class="account-actions">
+        <form id="operationForm" class="operation-form">
+          <div class="operation-form-title"><div><span class="section-kicker">QUICK ACTION</span><h3>Make an operation</h3></div><span class="action-lock">⌁ SECURE</span></div>
+          <div class="operation-fields"><label class="field"><span>Operation</span><select id="operationType" name="type"><option value="deposit">Deposit</option><option value="withdrawal">Withdraw</option><option value="transfer">Transfer</option></select></label><label class="field"><span>Amount</span><div class="amount-input"><span id="amountCurrency">EUR</span><input name="amount" type="number" min="0.01" step="0.01" required placeholder="0.00"></div></label><label class="field destination-field" id="destinationField" hidden><span>Destination account</span><select name="targetAccountId" id="targetAccountId" required></select></label></div>
+          <div class="form-error" id="operationError" role="alert"></div>
+          <button class="button button-primary operation-submit" type="submit">Continue <span>→</span></button>
+        </form>
+        <div class="history-panel"><div class="history-heading"><div><span class="section-kicker">LEDGER</span><h3>Recent activity</h3></div><button class="button button-quiet button-small" id="refreshAccountButton" type="button">Refresh</button></div><div id="operationList" class="operation-list" aria-live="polite"></div></div>
+      </div>
+      <div class="account-modal-footer"><span id="accountOpenedAt"></span><button class="button button-danger-quiet" id="closeAccountButton" type="button">Close account</button></div>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"><span class="toast-icon">✓</span><span id="toastMessage">Done</span></div>
+  <script src="/js/app.js" defer></script>
+</body>
+</html>

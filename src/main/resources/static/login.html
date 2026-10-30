@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101f3e">
+  <title>NordBank | Staff workspace</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/nordbank.css">
+</head>
+<body class="login-page">
+  <main class="login-shell">
+    <section class="login-visual">
+      <a class="brand login-brand" href="/" aria-label="NordBank"><span class="brand-mark" aria-hidden="true">N</span><span><strong>NordBank</strong><small>CLIENT SERVICES</small></span></a>
+      <div class="login-visual-copy"><span class="eyebrow"><span class="eyebrow-line"></span> BANKING, MADE CLEAR</span><h1>Good service<br>starts with a<br><em>clear picture.</em></h1><p>One thoughtful workspace for every client relationship.</p></div>
+      <div class="login-visual-foot"><span>NORDBANK · INTERNAL</span><span>STAFF ACCESS</span></div>
+    </section>
+    <section class="login-panel">
+      <div class="login-panel-top"><span>STAFF ACCESS</span><span class="login-panel-note">AUTHORIZED USERS</span></div>
+      <div class="login-form-wrap"><span class="section-kicker">WELCOME BACK</span><h2>Sign in to NordBank</h2><p class="login-lede">Use your staff credentials to continue.</p>
+        <div class="login-notice" id="logoutNotice" hidden>You have signed out.</div>
+        <div class="login-error" id="loginError" hidden>Those credentials were not recognized. Try again.</div>
+        <div class="login-error" id="loginSetupError" hidden>Secure sign-in could not be started. Check your connection and refresh the page.</div>
+        <form class="login-form" method="post" action="/login/employee" id="loginForm">
+          <input type="hidden" name="_csrf" id="loginCsrf">
+          <label class="field"><span>Username</span><input name="username" autocomplete="username" required autofocus placeholder="Your staff username"></label>
+          <label class="field"><span>Password</span><span class="password-control"><input id="loginPassword" name="password" type="password" autocomplete="current-password" required placeholder="Your password"><button class="password-toggle" id="passwordToggle" type="button" aria-label="Show password" aria-pressed="false">Show</button></span></label>
+          <button class="button button-primary login-submit" type="submit" disabled aria-busy="true">Preparing secure sign-in…</button>
+        </form>
+      </div>
+      <div class="login-panel-foot"><span>Need access? Contact your system administrator.</span><span>NORDBANK</span></div>
+    </section>
+  </main>
+  <script>
+    document.getElementById('passwordToggle').addEventListener('click', event => {
+      const input = document.getElementById('loginPassword');
+      const showing = input.type === 'password';
+      input.type = showing ? 'text' : 'password';
+      event.currentTarget.textContent = showing ? 'Hide' : 'Show';
+      event.currentTarget.setAttribute('aria-label', showing ? 'Hide password' : 'Show password');
+      event.currentTarget.setAttribute('aria-pressed', String(showing));
+    });
+    fetch('/csrf', { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+      .then(response => {
+        if (!response.ok) throw new Error('CSRF token request failed');
+        return response.json();
+      })
+      .then(token => {
+        const input = document.getElementById('loginCsrf');
+        input.name = token.parameterName;
+        input.value = token.token;
+        const button = document.querySelector('.login-submit');
+        button.innerHTML = 'Continue securely <span>→</span>';
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+      })
+      .catch(() => { document.getElementById('loginSetupError').hidden = false; });
+    const query = new URLSearchParams(location.search);
+    if (query.has('error')) document.getElementById('loginError').hidden = false;
+    if (query.has('logout')) document.getElementById('logoutNotice').hidden = false;
+  </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/shell :: head('Your banking')}"></head>
+<body class="customer-app" data-start-page="dashboard">
+  <div class="customer-shell">
+    <aside class="customer-sidebar" id="customerSidebar">
+      <a class="customer-brand" href="/client/dashboard" data-page="dashboard"><span class="customer-brand-mark">N</span><span>NordBank<small>PERSONAL BANKING</small></span></a>
+      <div class="customer-side-label">YOUR BANK</div>
+      <nav class="customer-nav" aria-label="Customer navigation">
+        <a href="/client/dashboard" data-page="dashboard" class="selected"><span class="nav-symbol">⌂</span>Overview</a>
+        <a href="/client/accounts" data-page="accounts"><span class="nav-symbol">▤</span>Accounts</a>
+        <a href="/client/cards" data-page="cards"><span class="nav-symbol">▣</span>Cards</a>
+        <a href="/client/card-tiers" data-page="card-tiers"><span class="nav-symbol">✧</span>Membership</a>
+        <a href="/client/transfers" data-page="transfers"><span class="nav-symbol">⇄</span>Send money</a>
+        <a href="/client/transactions" data-page="transactions"><span class="nav-symbol">↗</span>Transactions</a>
+        <a href="/client/analytics" data-page="analytics"><span class="nav-symbol">▥</span>Insights</a>
+      </nav>
+      <div class="customer-side-label secondary-label">MORE</div>
+      <nav class="customer-nav customer-nav-secondary" aria-label="More services">
+        <a href="/client/loans" data-page="loans"><span class="nav-symbol">◫</span>Loans</a>
+        <a href="/client/support" data-page="support"><span class="nav-symbol">◇</span>Support</a>
+        <a href="/client/profile" data-page="profile"><span class="nav-symbol">◉</span>Profile</a>
+      </nav>
+      
+    </aside>
+    <main class="customer-main">
+      <header class="customer-topbar"><button class="mobile-nav-toggle" id="mobileNavToggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button><div class="customer-breadcrumb"><span>NordBank</span><i>/</i><strong id="customerPageTitle">Overview</strong></div><div class="customer-top-actions"><button class="customer-profile-button" id="customerProfileButton" type="button" aria-haspopup="true"><span class="customer-avatar" id="customerAvatar">N</span><span><strong id="customerShortName">Customer</strong><small id="customerTierBadge">STANDARD</small></span><span class="profile-chevron">⌄</span></button><div class="profile-popover" id="profilePopover" hidden><button type="button" data-page="profile">Your profile</button><form method="post" th:action="@{/logout/client}" id="customerLogout"><button type="submit">Sign out securely</button></form></div></div></header>
+      <div id="customerPage" class="customer-page" aria-live="polite"><div class="page-loading"><span></span>Loading your accounts…</div></div>
+      <footer class="customer-footer"><span>NORDBANK · PERSONAL BANKING</span><span>Educational banking simulation · No real payments</span></footer>
+    </main>
+  </div>
+  <div class="customer-toast" id="customerToast" role="status" aria-live="polite"></div>
+  <dialog class="customer-dialog" id="transactionDialog"><button class="dialog-close" type="button" data-close-dialog aria-label="Close">×</button><div id="transactionDialogBody"></div></dialog>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
+  <script src="/js/customer.js" defer></script>
+</body>
+</html>
