@@ -1,0 +1,14 @@
+.account-state.frozen {
+  border-color: #f0e5cb;
+  color: #9b6a1f;
+  background: #fcf8ef;
+}
+
+.account-management-actions {
+  display: flex;
+  margin-top: 12px;
+}
+
+.account-management-actions:empty {
+  display: none;
+}

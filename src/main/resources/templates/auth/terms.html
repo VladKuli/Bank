@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/shell :: head('Terms and privacy notice')}"></head>
+<body class="customer-auth">
+<main class="terms-page"><a class="auth-brand" th:href="@{/register}"><span class="auth-brand-mark">N</span><span>NordBank<small>PERSONAL BANKING</small></span></a><span
+        class="auth-overline">EDUCATIONAL SIMULATION</span>
+    <h1>Terms and privacy notice</h1>
+    <p>NordBank is a fictional educational banking simulation. It does not provide real banking services, hold real
+        funds, issue payment instruments, or process real payments.</p>
+    <h2>Information you provide</h2>
+    <p>Your name, email address, optional phone number, and account activity are stored in this project’s database so
+        the application can demonstrate customer workflows. Passwords are stored as one-way hashes.</p>
+    <h2>Using the simulation</h2>
+    <p>Do not enter real financial account information, payment card data, passwords used on other services, or other
+        sensitive personal data. Simulated transfers only affect records in this application.</p><a
+            class="auth-submit terms-back" th:href="@{/register}">Return to registration</a></main>
+</body>
+</html>

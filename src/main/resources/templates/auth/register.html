@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/shell :: head('Open an account')}"></head>
+<body class="customer-auth">
+<main class="auth-layout auth-layout-register">
+    <section class="auth-story"><a class="auth-brand" href="/login/client"><span class="auth-brand-mark">N</span><span>NordBank<small>PERSONAL BANKING</small></span></a>
+        <div class="auth-story-content"><span class="auth-overline">YOUR NEXT CHAPTER</span>
+            <h1>Banking that<br>feels more<br><em>considered.</em></h1>
+            <p>Open a secure customer account and start with a complimentary EUR current account.</p>
+            <div class="auth-benefits"><span><i>✓</i> No account opening fee</span><span><i>✓</i> Secure, private access</span><span><i>✓</i> Manage everything online</span>
+            </div>
+        </div>
+        <div class="auth-story-foot"><span>Fictional educational banking service</span><span>© NORDBANK</span></div>
+    </section>
+    <section class="auth-panel"><a class="auth-brand mobile-brand" href="/login/client"><span
+            class="auth-brand-mark">N</span><span>NordBank<small>PERSONAL BANKING</small></span></a>
+        <div class="auth-form-wrap register-wrap"><span class="auth-overline">GET STARTED</span>
+            <h2>Create your account</h2>
+            <p class="auth-subtitle">Your information stays protected and private.</p>
+            <div class="auth-alert" role="alert" th:if="${registrationError}" th:text="${registrationError}">Could not
+                create account.
+            </div>
+            <form class="auth-form register-form" method="post" th:action="@{/register}">
+                <div class="auth-name-fields"><label class="auth-field"><span>First name</span><input name="firstName"
+                                                                                                      th:value="${form?.firstName}"
+                                                                                                      autocomplete="given-name"
+                                                                                                      maxlength="100"
+                                                                                                      required
+                                                                                                      placeholder="First name"></label><label
+                        class="auth-field"><span>Last name</span><input name="lastName" th:value="${form?.lastName}"
+                                                                        autocomplete="family-name" maxlength="100"
+                                                                        required placeholder="Last name"></label></div>
+                <label class="auth-field"><span>Email address</span><input type="email" name="email"
+                                                                           th:value="${form?.email}"
+                                                                           autocomplete="email" maxlength="254" required
+                                                                           placeholder="you@example.com"></label>
+                <label class="auth-field"><span>Phone <small>Optional</small></span><input type="tel" name="phone"
+                                                                                           th:value="${form?.phone}"
+                                                                                           autocomplete="tel"
+                                                                                           maxlength="32"
+                                                                                           placeholder="+371 2000 0000"></label>
+                <label class="auth-field"><span>Password</span><span class="auth-password"><input id="registerPassword"
+                                                                                                  type="password"
+                                                                                                  name="password"
+                                                                                                  minlength="12"
+                                                                                                  maxlength="72"
+                                                                                                  autocomplete="new-password"
+                                                                                                  required
+                                                                                                  placeholder="At least 12 characters"><button
+                        type="button" data-password-toggle="registerPassword">Show</button></span></label>
+                <label class="auth-field"><span>Confirm password</span><span class="auth-password"><input
+                        id="confirmPassword" type="password" name="confirmPassword" minlength="12" maxlength="72"
+                        autocomplete="new-password" required placeholder="Enter your password again"><button
+                        type="button" data-password-toggle="confirmPassword">Show</button></span></label>
+                <label class="check-row terms-row"><input type="checkbox" name="acceptTerms" value="true"
+                                                          required><span>I agree to the <a href="#terms" data-terms>terms and privacy notice</a>.</span></label>
+                <button class="auth-submit" type="submit">Create secure account <span aria-hidden="true">→</span>
+                </button>
+            </form>
+            <p class="auth-register">Already a customer? <a th:href="@{/login/client}">Sign in</a></p>
+        </div>
+        <footer class="auth-panel-foot"><span>Your account includes a default EUR account</span><a
+                th:href="@{/login/employee}">Employee sign in</a></footer>
+    </section>
+</main>
+<script src="/js/auth.js" defer></script>
+</body>
+</html>

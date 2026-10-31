@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/shell :: head('Employee operations')}"></head>
+<body class="workflow-app">
+<div class="workflow-shell">
+    <aside class="workflow-sidebar"><a class="customer-brand" href="/"><span class="customer-brand-mark">N</span><span>NordBank<small>STAFF WORKSPACE</small></span></a>
+        <div class="customer-side-label">OPERATIONS</div>
+        <nav class="customer-nav"><a href="/" data-workflow="dashboard"><span class="nav-symbol">⌂</span>Client services</a><a
+                href="/employee/cards" data-workflow="cards"><span class="nav-symbol">▣</span>Card requests</a><a
+                href="/employee/memberships" data-workflow="memberships"><span
+                class="nav-symbol">✧</span>Memberships</a><a href="/employee/loans" data-workflow="loans"><span
+                class="nav-symbol">◫</span>Loan applications</a><a href="/employee/requests"
+                                                                   data-workflow="requests"><span
+                class="nav-symbol">◇</span>Support requests</a><a href="/employee/transfers"
+                                                                  data-workflow="transfers"><span
+                class="nav-symbol">⇄</span>Transfers</a></nav>
+        <div class="workflow-sidebar-foot">EMPLOYEE ACCESS<br><small>Actions are recorded for review</small></div>
+    </aside>
+    <main class="workflow-main">
+        <header class="workflow-topbar">
+            <div><span class="customer-breadcrumb">NordBank / <strong id="workflowTitle">Operations</strong></span>
+            </div>
+            <div class="workflow-tools"><span class="secure-indicator"><i></i> STAFF SESSION</span>
+                <form method="post" th:action="@{/logout}" id="workflowLogout">
+                    <button class="button-customer small" type="submit">Sign out</button>
+                </form>
+            </div>
+        </header>
+        <section class="workflow-content">
+            <div id="workflowPage">
+                <div class="page-loading"><span></span>Loading queue…</div>
+            </div>
+        </section>
+        <footer class="customer-footer"><span>NORDBANK · INTERNAL OPERATIONS</span><span>Educational simulation</span>
+        </footer>
+    </main>
+</div>
+<div class="customer-toast" id="workflowToast" role="status" aria-live="polite"></div>
+<script src="/js/employee-workflows.js" defer></script>
+</body>
+</html>
