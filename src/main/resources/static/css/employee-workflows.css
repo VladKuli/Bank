@@ -30,7 +30,7 @@
 }
 
 .workflow-sidebar .customer-nav a {
-    font-size: 10px
+    font-size: 16px
 }
 
 .workflow-sidebar-foot {
@@ -257,7 +257,7 @@
         min-width: max-content;
         min-height: 34px;
         padding: 0 9px;
-        font-size: 8px
+        font-size: 15px
     }
 
     .workflow-sidebar .customer-nav a.selected:before {

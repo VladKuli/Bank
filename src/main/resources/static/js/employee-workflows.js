@@ -64,7 +64,7 @@
     }
 
     function heading(copy, count) {
-        return `<div class="page-heading-customer"><div><span class="overline">NORDBANK OPERATIONS</span><h1>${esc(labels[section])}</h1><p>${esc(copy)}</p></div><span class="workflow-count">${count} ${count === 1 ? 'ITEM' : 'ITEMS'}</span></div>`
+        return `<div class="page-heading-customer"><div><span class="overline">BALTIC BANK OPERATIONS</span><h1>${esc(labels[section])}</h1><p>${esc(copy)}</p></div><span class="workflow-count">${count} ${count === 1 ? 'ITEM' : 'ITEMS'}</span></div>`
     }
 
     function empty() {
@@ -73,11 +73,32 @@
 
     async function load() {
         $('#workflowTitle').textContent = labels[section] || 'Operations';
-        document.querySelectorAll('[data-workflow]').forEach(a => a.classList.toggle('selected', a.dataset.workflow === section));
+        document.querySelectorAll('[data-workflow]').forEach(item => {
+          const current = item.dataset.workflow === section;
+          item.classList.toggle('selected', current);
+          if (current) item.setAttribute('aria-current', 'page');
+          else item.removeAttribute('aria-current');
+        });
         $('#workflowPage').innerHTML = '<div class="page-loading"><span></span>Loading queue…</div>';
         try {
             rows = await api(paths[section]);
             $('#workflowPage').innerHTML = section === 'transfers' ? renderTransfers(rows) : section === 'requests' ? renderSupport(rows) : renderReviews(rows);
+            if (section !== 'transfers' && rows.length) {
+                $('#workflowPage .page-heading-customer').insertAdjacentHTML('afterend',
+                    '<div class="queue-filter"><label for="queueSearch">Filter this queue</label><input class="customer-input" id="queueSearch" type="search" placeholder="Customer, request or status"><span id="queueCount" role="status"></span><button type="button" id="clearQueueFilter" class="text-button" hidden>Clear filter</button></div>');
+                const search = $('#queueSearch');
+                const entries = [...document.querySelectorAll(section === 'requests' ? '.support-item' : '.review-queue > article')];
+                function filterQueue() {
+                    const term = search.value.trim().toLowerCase();
+                    entries.forEach(entry => {entry.hidden = !entry.textContent.toLowerCase().includes(term);});
+                    const count = entries.filter(entry => !entry.hidden).length;
+                    $('#queueCount').textContent = count ? count+' of '+entries.length+' visible' : 'No matching requests';
+                    $('#clearQueueFilter').hidden = !search.value;
+                }
+                search.addEventListener('input',filterQueue);
+                $('#clearQueueFilter').onclick = () => {search.value=''; filterQueue(); search.focus();};
+                filterQueue();
+            }
         } catch (error) {
             $('#workflowPage').innerHTML = `${heading('', 0)}<div class="workflow-error">${esc(error.message)}</div>`;
         }
@@ -93,11 +114,11 @@
     }
 
     function renderSupport(items) {
-        return `${heading('Respond to customer requests and keep the case status up to date.', items.length)}${items.length ? items.map(item => `<article class="support-item"><div class="review-item" style="padding:0;border:0;background:transparent"><div><strong>${esc(item.subject)}</strong><small>${esc(item.category)} · ${esc(fmtDate(item.createdAt))} · ${esc(item.id.slice(0, 8).toUpperCase())}</small></div><div><strong>${esc(item.status.replaceAll('_', ' '))}</strong><small>Customer: ${esc(item.ownerName || 'Customer')}</small></div><p>${esc(item.message)}</p></div>${item.employeeResponse ? `<p class="inline-message"><strong>Previous response:</strong> ${esc(item.employeeResponse)}</p>` : ''}<form class="support-update" data-support-form="${esc(item.id)}"><textarea name="response" maxlength="5000" required placeholder="Write a response visible to the customer">${esc(item.employeeResponse || '')}</textarea><select name="status"><option value="IN_PROGRESS" ${item.status === 'IN_PROGRESS' ? 'selected' : ''}>In progress</option><option value="WAITING_FOR_CUSTOMER" ${item.status === 'WAITING_FOR_CUSTOMER' ? 'selected' : ''}>Waiting for customer</option><option value="RESOLVED" ${item.status === 'RESOLVED' ? 'selected' : ''}>Resolved</option></select><span></span><button class="button-customer primary small" type="submit">Save response</button></form></article>`).join('') : empty()}`;
+        return `${heading('Respond to customer requests and keep the case status up to date.', items.length)}${items.length ? items.map(item => `<article class="support-item"><div class="review-item" style="padding:0;border:0;background:transparent"><div><strong>${esc(item.subject)}</strong><small>${esc(item.category)} · ${esc(fmtDate(item.createdAt))} · ${esc(item.id.slice(0, 8).toUpperCase())}</small></div><div><strong>${esc(item.status.replaceAll('_', ' '))}</strong><small>Customer: ${esc(item.ownerName || 'Customer')}</small></div><p>${esc(item.message)}</p></div>${item.employeeResponse ? `<p class="inline-message"><strong>Previous response:</strong> ${esc(item.employeeResponse)}</p>` : ''}<form class="support-update" data-support-form="${esc(item.id)}"><textarea aria-label="Customer response" name="response" maxlength="5000" required placeholder="Write a response visible to the customer">${esc(item.employeeResponse || '')}</textarea><select aria-label="Case status" name="status"><option value="IN_PROGRESS" ${item.status === 'IN_PROGRESS' ? 'selected' : ''}>In progress</option><option value="WAITING_FOR_CUSTOMER" ${item.status === 'WAITING_FOR_CUSTOMER' ? 'selected' : ''}>Waiting for customer</option><option value="RESOLVED" ${item.status === 'RESOLVED' ? 'selected' : ''}>Resolved</option></select><span></span><button class="button-customer primary small" type="submit">Save response</button></form></article>`).join('') : empty()}`;
     }
 
     function renderTransfers(items) {
-        return `${heading('Search the shared ledger of simulated customer-to-customer transfers.', items.length)}<div class="filter-row"><input class="workflow-search" id="transferSearch" placeholder="Search by reference, sender or recipient"></div><div class="table-wrap"><div class="transfer-row" style="background:#f9fafc;font-size:7px;font-weight:700;color:#8491a3"><span>REFERENCE / DATE</span><span>SENDER → RECIPIENT</span><span>ACCOUNTS</span><span>AMOUNT</span></div><div id="employeeTransferRows">${transferRows(items)}</div></div>`;
+        return `${heading('Search the shared ledger of simulated customer-to-customer transfers.', items.length)}<div class="filter-row"><input class="workflow-search" aria-label="Search transfer ledger" id="transferSearch" placeholder="Search by reference, sender or recipient"></div><div class="table-wrap"><div class="transfer-row" style="background:#f9fafc;font-size:7px;font-weight:700;color:#8491a3"><span>REFERENCE / DATE</span><span>SENDER → RECIPIENT</span><span>ACCOUNTS</span><span>AMOUNT</span></div><div id="employeeTransferRows">${transferRows(items)}</div></div>`;
     }
 
     function transferRows(items) {
@@ -110,12 +131,20 @@
 
     async function decide(button) {
         const status = button.dataset.decision;
-        let reason = null;
-        if (status === 'REJECTED') {
-            reason = prompt('Enter a reason the customer can see:');
-            if (reason === null) return;
-            if (!reason.trim()) return toast('A reason is required to reject.', true)
-        } else if (!confirm('Approve this request?')) return;
+        const item=rows.find(row=>row.id===button.dataset.id);
+        const dialog=document.createElement('dialog');
+        dialog.className='customer-dialog';
+        dialog.setAttribute('aria-label','Review request');
+        dialog.innerHTML=`<form method="dialog"><span class="overline">${esc(labels[section])}</span><h2>${status==='APPROVED'?'Approve':'Reject'} request?</h2><p>${esc(item.customerName)} · ${esc(item.requestedValue || item.tier)}</p><p>${esc(item.detail)}</p>${status==='REJECTED'?'<label class="field-stack">Reason for the customer<textarea class="customer-textarea" name="reason" required maxlength="500"></textarea></label>':''}<div class="form-actions-customer"><button class="button-customer" value="cancel" formnovalidate>Cancel</button><button class="button-customer primary" value="confirm">Confirm decision</button></div></form>`;
+        document.body.append(dialog);
+        const closed=new Promise(resolve=>dialog.addEventListener('close',resolve,{once:true}));
+        dialog.showModal();
+        await closed;
+        const confirmed=dialog.returnValue==='confirm';
+        const reason=dialog.querySelector('textarea')?.value.trim() || null;
+        dialog.remove();
+        if (!confirmed) return;
+        if (status==='REJECTED' && !reason) return toast('Enter a reason for the customer.',true);
         const apiPath = paths[section];
         const id = button.dataset.id;
         button.disabled = true;

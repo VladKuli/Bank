@@ -109,8 +109,16 @@
     return '';
   }
 
-  function renderClients(clients, query) {
+  let directoryPage = 1;
+  function renderClients(clients, query, paginate = false) {
+    if (!paginate) directoryPage = 1;
+    $('#directoryTools').hidden = false;
     state.clients = clients;
+    clients = clients.filter(client => !$('#directoryStatus').value || client.status === $('#directoryStatus').value);
+    const pages = Math.max(1, Math.ceil(clients.length / 15));
+    $('#directoryPage').textContent = directoryPage + ' / ' + pages;
+    $('#directoryPrev').disabled = directoryPage === 1;
+    $('#directoryNext').disabled = directoryPage >= pages;
     $('#resultCount').textContent = clients.length ? String(clients.length).padStart(2, '0') : '';
     $('#navCount').textContent = clients.length ? String(clients.length).padStart(2, '0') : '—';
     $('#searchMeta').textContent = `Results for “${query}”`;
@@ -118,9 +126,9 @@
       $('#clientResults').innerHTML = '<div class="empty-state"><span class="empty-mark"><i></i></span><strong>No matching clients</strong><p>Try another name, identification code, phone number, or email.</p></div>';
       return;
     }
-    $('#clientResults').innerHTML = clients.map(client => `
+    $('#clientResults').innerHTML = clients.slice((directoryPage-1)*15,directoryPage*15).map(client => `
       <button class="client-row" type="button" data-client-id="${escapeHtml(client.id)}" aria-label="Open ${escapeHtml(client.firstName)} ${escapeHtml(client.lastName)}">
-        <span class="client-name-wrap"><span class="client-avatar">${escapeHtml(initials(client.firstName, client.lastName))}</span><span class="client-name-copy"><span class="client-name">${escapeHtml(client.firstName)} ${escapeHtml(client.lastName)}</span><small class="client-code">${escapeHtml(client.personalCode)}</small></span></span>
+        <span class="client-name-wrap"><span class="client-avatar">${escapeHtml(initials(client.firstName, client.lastName))}</span><span class="client-name-copy"><span class="client-name">${escapeHtml(client.firstName)} ${escapeHtml(client.lastName)}</span><small class="client-code">${escapeHtml(client.personalCode)} · ${escapeHtml(client.membershipTier)}</small></span></span>
         <span class="contact-cell">${escapeHtml(client.phone || 'No phone')}<small>${escapeHtml(client.email || 'No email')}</small></span>
         <span class="status-badge ${statusClass(client.status)}">${escapeHtml((client.status || 'UNKNOWN').replaceAll('_', ' '))}</span>
       </button>`).join('');
@@ -177,13 +185,39 @@
     $('#clientsView').hidden = isStaff || !isClients;
     $('#staffView').hidden = !isStaff;
     $('#breadcrumbPage').textContent = isStaff ? 'Team access' : isClients ? 'Clients' : 'Overview';
-    $$('[data-nav]').forEach(item => item.classList.toggle('active', item.dataset.nav === view));
+    $$('[data-nav]').forEach(item => {
+      const current = item.dataset.nav === view;
+      item.classList.toggle('active', current);
+      if (current) item.setAttribute('aria-current', 'page');
+      else item.removeAttribute('aria-current');
+    });
     if (isStaff) loadEmployees().catch(() => {});
     if (view === 'overview') loadOverview();
   }
 
+  function paginateDirectory(delta) {
+    directoryPage += delta;
+    renderClients(state.clients,$('#searchInput').value,true);
+  }
+  $('#directoryPrev').onclick=()=>paginateDirectory(-1);
+  $('#directoryNext').onclick=()=>paginateDirectory(1);
+  $('#directoryStatus').onchange=()=>renderClients(state.clients,$('#searchInput').value);
+  $('#searchInput').addEventListener('input',()=>{ $('#directoryTools').hidden=true; });
+  async function loadQueue(requestId) {
+    const queues=[['cards','card-requests','Pending card requests'],['loans','loan-applications','Pending loans'],['requests','support-requests','Open support cases']];
+    const items=await Promise.all(queues.map(async ([route,endpoint,label])=>{
+      let count;
+      try {
+        const records=await api('/api/employee/'+endpoint);
+        count=records.filter(r=>route==='requests'?r.status!=='RESOLVED':r.status==='PENDING').length;
+      } catch { count='Unavailable'; }
+      return `<a class="queue-link" href="/employee/${route}"><span>${label}</span><strong>${count} →</strong></a>`;
+    }));
+    if(requestId===state.overviewRequestId) $('#queueSummary').innerHTML=items.join('');
+  }
   async function loadOverview() {
     const requestId = ++state.overviewRequestId;
+    loadQueue(requestId);
     const metrics = $('#overviewMetrics');
     metrics.setAttribute('aria-busy', 'true');
     try {

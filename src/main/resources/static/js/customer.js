@@ -3,7 +3,7 @@
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const state = { csrf: null, profile: null, accounts: [], cards: [], transactions: [], cardRequests: [], membershipRequests: [], loans: [], support: [], selectedRecipient: null, recipientTimer: null, transferPayload: null, page: 'dashboard', toastTimer: null, chart: null, balanceVisible: true, transactionFilter: '', transactionType: 'ALL', transactionStatus: 'ALL', accountFilter: 'ALL', transactionSort: 'newest', transactionPage: 1, analyticsCurrency: null, analyticsMonths: 6 };
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const initials = (a = '', b = '') => `${a.trim().slice(0, 1)}${b.trim().slice(0, 1)}`.toUpperCase() || 'N';
+  const initials = (a = '', b = '') => `${a.trim().slice(0, 1)}${b.trim().slice(0, 1)}`.toUpperCase() || 'B';
   const fmtMoney = (amount, currency = 'EUR') => { try { return new Intl.NumberFormat('en-GB', { style: 'currency', currency, minimumFractionDigits: 2 }).format(Number(amount)); } catch { return `${Number(amount).toFixed(2)} ${currency}`; } };
   const fmtDate = (date, time = false) => date ? new Intl.DateTimeFormat('en-GB', time ? { dateStyle: 'medium', timeStyle: 'short' } : { dateStyle: 'medium' }).format(new Date(date)) : '—';
   const title = page => ({ dashboard: 'Overview', accounts: 'Accounts', cards: 'Cards', 'card-tiers': 'Membership', transfers: 'Send money', transactions: 'Transactions', analytics: 'Insights', loans: 'Loans', support: 'Support', profile: 'Profile' }[page] || 'Overview');
@@ -41,14 +41,14 @@
   function statusTag(status) { const cls = ['PENDING', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'].includes(status) ? 'pending' : ['REJECTED', 'BLOCKED'].includes(status) ? 'rejected' : ''; return `<span class="status-tag ${cls}">${esc(String(status || 'COMPLETED').replaceAll('_', ' '))}</span>`; }
   function cardMarkup(card, actions = true) {
     const tier = card.tier.toLowerCase();
-    return `<article class="payment-card ${tier}"><div class="card-top"><span class="card-tier-label">NORDBANK · ${esc(card.tier)} CARD</span><span class="card-status ${card.status.toLowerCase()}">${esc(card.status)}</span></div><div><span class="card-chip" aria-hidden="true"></span><div class="card-number">•••• &nbsp;•••• &nbsp;•••• &nbsp;${esc(card.lastFour)}</div></div><div class="card-bottom"><span><small class="cardholder-label">CARDHOLDER</small><span class="cardholder-name">${esc(`${state.profile.firstName} ${state.profile.lastName}`)}</span></span><span class="card-expiry">${esc(new Date(card.expiresOn).toLocaleDateString('en-GB', { month: '2-digit', year: '2-digit' }))}</span></div>${actions ? `<div class="card-actions"><button class="button-customer small" data-card-action="${card.status === 'FROZEN' ? 'ACTIVE' : 'FROZEN'}" data-card-id="${esc(card.id)}">${card.status === 'FROZEN' ? 'Unfreeze' : 'Freeze'}</button><button class="button-customer small danger" data-card-action="BLOCKED" data-card-id="${esc(card.id)}">Block</button></div>` : ''}</article>`;
+    return `<article class="payment-card ${tier}"><div class="card-top"><button class="card-hit" data-card-view="${esc(card.id)}" aria-label="View ${esc(card.tier)} card ending ${esc(card.lastFour)}"></button><span class="card-tier-label">BALTIC BANK · ${esc(card.tier)} CARD</span><span class="card-status ${card.status.toLowerCase()}">${esc(card.status)}</span></div><div><span class="card-chip" aria-hidden="true"></span><svg class="contactless" aria-hidden="true" viewBox="0 0 20 20"><path d="M4 7q2 3 0 6m4-9q4 6 0 12m4-15q6 9 0 18"/></svg><div class="card-number">•••• &nbsp;•••• &nbsp;•••• &nbsp;${esc(card.lastFour)}</div></div><div class="card-bottom"><span><small class="cardholder-label">CARDHOLDER</small><span class="cardholder-name">${esc(`${state.profile.firstName} ${state.profile.lastName}`)}</span></span><span class="card-expiry">${esc(new Date(card.expiresOn).toLocaleDateString('en-GB', { month: '2-digit', year: '2-digit', timeZone:'UTC' }))}</span></div>${actions && card.status !== 'BLOCKED' ? `<div class="card-actions"><button class="button-customer small" data-card-action="${card.status === 'FROZEN' ? 'ACTIVE' : 'FROZEN'}" data-card-id="${esc(card.id)}">${card.status === 'FROZEN' ? 'Unfreeze' : 'Freeze'}</button><button class="button-customer small danger" data-card-action="BLOCKED" data-card-id="${esc(card.id)}">Block</button></div>` : ''}</article>`;
   }
   function transactionRows(transactions) {
     if (!transactions.length) return empty('No transactions found', 'Try adjusting the filters or make a transfer to get started.', '↗');
     return `<div class="table-wrap"><table class="customer-table"><thead><tr><th>TRANSACTION</th><th>DATE</th><th>REFERENCE</th><th>STATUS</th><th>AMOUNT</th></tr></thead><tbody>${transactions.map(tx => {
       const signed = tx.incoming ? `+${fmtMoney(tx.amount, tx.currency)}` : `−${fmtMoney(tx.amount, tx.currency)}`;
-      const label = tx.type === 'TRANSFER' ? (tx.incoming ? `From ${tx.otherParty || 'NordBank customer'}` : `To ${tx.otherParty || 'NordBank customer'}`) : tx.type === 'DEPOSIT' ? 'Deposit' : tx.type === 'WITHDRAWAL' ? 'Withdrawal' : tx.type;
-      return `<tr tabindex="0" role="button" data-transaction-id="${esc(tx.id)}"><td><span class="transaction-title">${esc(tx.description || label)}</span><small class="transaction-sub">${esc(label)}${tx.accountLastFour ? ` · ${esc(tx.accountLastFour)}` : ''}</small></td><td>${esc(fmtDate(tx.occurredAt, true))}</td><td>${esc(tx.reference)}</td><td>${statusTag(tx.status)}</td><td class="${tx.incoming ? 'amount-in' : 'amount-out'}">${esc(signed)}</td></tr>`;
+      const label = tx.type === 'TRANSFER' ? (tx.incoming ? `From ${tx.otherParty || 'Baltic Bank customer'}` : `To ${tx.otherParty || 'Baltic Bank customer'}`) : tx.type === 'DEPOSIT' ? 'Deposit' : tx.type === 'WITHDRAWAL' ? 'Withdrawal' : tx.type;
+      return `<tr tabindex="0" role="button" data-transaction-id="${esc(tx.id)}"><td><span class="tx-icon" aria-hidden="true">${tx.incoming?'↙':'↗'}</span><span class="transaction-title">${esc(tx.description || label)}</span><small class="transaction-sub">${esc(label)}${tx.accountLastFour ? ` · ${esc(tx.accountLastFour)}` : ''}</small></td><td>${esc(fmtDate(tx.occurredAt, true))}</td><td>${esc(tx.reference)}</td><td>${statusTag(tx.status)}</td><td class="${tx.incoming ? 'amount-in' : 'amount-out'}">${esc(signed)}</td></tr>`;
     }).join('')}</tbody></table></div>`;
   }
   function balanceGroups() {
@@ -69,12 +69,16 @@
     const openAccounts = state.accounts.filter(a => a.status === 'OPEN');
     const balance = state.balanceVisible ? esc(totalLabel()) : '••••••••';
     const recent = state.transactions.slice(0, 6);
-    const cards = state.cards.slice(0, 2);
-    return `<div class="dashboard-greeting"><div><span class="overline">YOUR FINANCIAL OVERVIEW</span><h1>Good ${new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, ${esc(state.profile.firstName)}.</h1><p>Here’s a clear view of your money today.</p></div><span class="membership-pill">✧ ${esc(state.profile.membershipTier)} MEMBER</span></div>
-      <div class="dashboard-grid"><section class="balance-panel"><div class="balance-panel-top"><span class="balance-label">TOTAL AVAILABLE BALANCE</span><button class="visibility-button" id="balanceVisibility" type="button" aria-pressed="${state.balanceVisible}">${state.balanceVisible ? 'Hide balance' : 'Show balance'}</button></div><div><div class="balance-value">${balance}</div><div class="balance-subtitle">Across ${openAccounts.length} open ${openAccounts.length === 1 ? 'account' : 'accounts'} · balances grouped by currency</div></div><div class="balance-panel-bottom"><span>${esc(state.profile.customerNumber)}</span><button class="visibility-button" data-page="accounts" type="button">Manage accounts →</button></div></section><div class="dashboard-side-stats"><div class="dashboard-stat"><span class="stat-label">OPEN ACCOUNTS</span><strong>${openAccounts.length}</strong><small>Ready for everyday banking</small></div><div class="dashboard-stat"><span class="stat-label">PAYMENT CARDS</span><strong>${state.cards.length}</strong><small>${state.cards.filter(c => c.status === 'ACTIVE').length} active cards</small></div><div class="dashboard-stat"><span class="stat-label">MEMBERSHIP</span><strong style="font-size:17px">${esc(state.profile.membershipTier)}</strong><small>View your benefits</small></div><div class="dashboard-stat"><span class="stat-label">OPEN REQUESTS</span><strong>${state.support.filter(s => s.status !== 'RESOLVED').length + state.loans.filter(l => l.status === 'PENDING').length}</strong><small>Support and loan reviews</small></div></div></div>
-      <div class="quick-actions"><button class="quick-action" data-page="transfers"><i>⇄</i><span>Send money</span></button><button class="quick-action" data-page="accounts"><i>▤</i><span>Account details</span></button><button class="quick-action" data-page="cards"><i>▣</i><span>Manage cards</span></button><button class="quick-action" data-page="analytics"><i>▥</i><span>Insights</span></button><button class="quick-action" data-page="support"><i>◇</i><span>Get support</span></button></div>
-      <section class="section-block"><div class="section-title-row"><div><span class="overline">YOUR CARDS</span><h2>Everyday payments</h2></div><button class="text-button" data-page="cards">Manage cards →</button></div>${cards.length ? `<div class="card-list">${cards.map(c => cardMarkup(c, false)).join('')}</div>` : empty('Your first card is one step away', 'Request a standard card and link it to one of your accounts.', '▣')}</section>
-      <section class="section-block"><div class="section-title-row"><div><span class="overline">ACCOUNT ACTIVITY</span><h2>Recent transactions</h2></div><button class="text-button" data-page="transactions">View all →</button></div>${recentTransactions(recent, 5)}</section>`;
+    const currency = openAccounts[0]?.currency || 'EUR';
+    const series = monthSeries(state.transactions.filter(t => t.currency === currency), state.analyticsMonths);
+    const latest = series.at(-1);
+    const actions = [['transfers','Send money'],['cards','My cards'],['transactions','Transactions'],['analytics','Insights'],['loans','Loans'],['support','Support']];
+    return `<header class="dashboard-greeting"><div><span class="overline">${esc(new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}))}</span><h1>Good ${new Date().getHours()<12?'morning':new Date().getHours()<18?'afternoon':'evening'}, ${esc(state.profile.firstName)}.</h1><p>Here’s your banking overview for today.</p></div><span class="membership-pill">✧ ${esc(state.profile.membershipTier)} MEMBER</span></header>
+    <div class="overview-pair"><section class="balance-panel"><div class="balance-panel-top"><span class="balance-label">AVAILABLE BALANCE</span><button id="balanceVisibility" class="visibility-button" aria-pressed="${state.balanceVisible}">${state.balanceVisible?'Hide':'Show'} balance</button></div><div><div class="balance-value">${balance}</div><div class="balance-subtitle">Across ${openAccounts.length} open account${openAccounts.length===1?'':'s'}</div></div><div class="balance-panel-bottom"><span>${openAccounts[0]?esc(openAccounts[0].type)+' · •••• '+esc(openAccounts[0].accountNumber.slice(-4)):''}</span><button class="visibility-button" data-page="accounts">Account details →</button></div></section>
+    <section class="wallet-panel"><div class="section-title-row"><h2>My wallet</h2><button class="text-button" data-page="cards">Manage cards →</button></div>${state.cards.length?`<div class="wallet-strip" tabindex="0" aria-label="Payment cards">${state.cards.map(c=>cardMarkup(c,false)).join('')}</div>${state.cards.length>1?'<div class="wallet-controls"><button data-wallet-shift="-1" aria-label="Previous payment card">←</button><button data-wallet-shift="1" aria-label="Next payment card">→</button></div>':''}`: `<button class="wallet-invite" data-page="cards"><span class="card-tier-label">BALTIC BANK · DIGITAL WALLET</span><strong>Get your first card</strong><span>Explore payment cards →</span></button>`}</section></div>
+    <nav class="quick-actions" aria-label="Quick actions">${actions.map(([page,label])=>`<button class="quick-action" data-page="${page}"><i aria-hidden="true"><svg class="nav-symbol"><use href="/css/navigation.svg#${page}"/></svg></i><span>${label}</span></button>`).join('')}</nav>
+    <section class="section-block surface"><div class="section-title-row"><div><span class="overline">CASH FLOW · ${esc(currency)}</span><h2>Financial overview</h2></div><select id="dashboardPeriod" class="customer-select" aria-label="Chart period">${[3,6,12].map(n=>`<option value="${n}" ${n===state.analyticsMonths?'selected':''}>Last ${n} months</option>`).join('')}</select></div><div class="cash-grid"><div class="cash-totals">${[['Monthly income',latest.income],['Monthly expenses',latest.expenses],['Net movement',latest.income-latest.expenses]].map(([label,value])=>`<div><small>${label}</small><strong>${esc(fmtMoney(value,currency))}</strong></div>`).join('')}</div><div class="chart-container"><canvas id="dashboardChart" aria-label="Monthly income and expenses"></canvas></div></div></section>
+    <section class="section-block surface"><div class="section-title-row"><h2>Recent transactions</h2><button class="text-button" data-page="transactions">View history →</button></div>${recentTransactions(recent,5)}</section>`;
   }
   async function renderAccounts() {
     await loadTransactions();
@@ -86,9 +90,10 @@
     const [cards, requests, accounts] = await Promise.all([api('/api/customer/cards'), api('/api/customer/card-requests'), api('/api/customer/accounts')]);
     state.cards = cards; state.cardRequests = requests;
     const openAccounts = accounts.filter(a => a.status === 'OPEN');
-    return `${heading('PAYMENT CARDS', 'Cards for your everyday', 'Manage simulated payment cards linked to your NordBank accounts.', '<button class="button-customer primary" data-action="new-card">Request a card <span>＋</span></button>')}
+    return `${heading('PAYMENT CARDS', 'Cards for your everyday', 'Manage simulated payment cards linked to your Baltic Bank accounts.', '<button class="button-customer primary" data-action="new-card">Request a card <span>＋</span></button>')}
       ${cards.length ? `<div class="card-list">${cards.map(c => cardMarkup(c)).join('')}</div>` : empty('Your wallet is ready for its first card', 'Request a standard card to get started with this simulation.', '▣')}
-      <section class="section-block"><div class="section-title-row"><div><span class="overline">CARD REQUESTS</span><h2>Request history</h2></div><button class="text-button" data-page="card-tiers">Explore membership →</button></div>${requests.length ? `<div class="table-wrap"><table class="customer-table"><thead><tr><th>REQUESTED CARD</th><th>DATE</th><th>STATUS</th><th>DECISION</th></tr></thead><tbody>${requests.map(r => `<tr><td class="transaction-title">${esc(r.tier)} card</td><td>${esc(fmtDate(r.requestedAt))}</td><td>${statusTag(r.status)}</td><td>${esc(r.decisionReason || '—')}</td></tr>`).join('')}</tbody></table></div>` : empty('No card requests', 'Higher tier cards require review by a NordBank employee.')}</section>
+      <section class="section-block"><div class="section-title-row"><div><span class="overline">CARD REQUESTS</span><h2>Request history</h2></div><button class="text-button" data-page="card-tiers">Explore membership →</button></div>${requests.length ? `<div class="table-wrap"><table class="customer-table"><thead><tr><th>REQUESTED CARD</th><th>DATE</th><th>STATUS</th><th>DECISION</th></tr></thead><tbody>${requests.map(r => `<tr><td class="transaction-title">${esc(r.tier)} card</td><td>${esc(fmtDate(r.requestedAt))}</td><td>${statusTag(r.status)}</td><td>${esc(r.decisionReason || '—')}</td></tr>`).join('')}</tbody></table></div>` : empty('No card requests', 'Higher tier cards require review by a Baltic Bank employee.')}</section>
+      <section class="surface section-block"><div class="section-title-row"><h2>Card tiers</h2><button class="text-button" data-page="card-tiers">Membership options →</button></div><div class="wallet-tiers">${[['Standard','Deep navy','1,000'],['Premium','Platinum','3,000'],['VIP','Black and gold','10,000']].map(([name,finish,limit])=>`<div><i class="finish ${name.toLowerCase()}" aria-hidden="true"></i><strong>${name}</strong><small>${finish} · €${limit} illustrative daily limit</small></div>`).join('')}</div></section>
       <dialog class="customer-dialog" id="cardRequestDialog"><button class="dialog-close" type="button" data-close-dialog aria-label="Close">×</button><h2>Request a payment card</h2><p class="auth-subtitle">Cards are simulated. No real card credentials are issued or stored.</p><form id="cardRequestForm"><div class="form-grid-customer"><label class="field-stack full"><span>Link to account</span><select class="customer-select" name="accountId" required>${openAccounts.map(a => `<option value="${esc(a.id)}">${esc(a.type)} · ${esc(a.currency)} · ${esc(a.accountNumber.slice(-4))}</option>`).join('')}</select></label><label class="field-stack full"><span>Card tier</span><select class="customer-select" name="tier" required>${['STANDARD','PREMIUM','VIP'].filter(t => ['STANDARD','PREMIUM','VIP'].indexOf(t) <= ['STANDARD','PREMIUM','VIP'].indexOf(state.profile.membershipTier)).map(t => `<option value="${t}">${t}</option>`).join('')}</select><small class="inline-message">Your membership determines eligible card tiers. Premium and VIP card requests require review.</small></label></div><div class="form-error-customer" id="cardRequestError"></div><div class="form-actions-customer"><button class="button-customer primary" type="submit">Submit request</button></div></form></dialog>`;
   }
   async function renderTiers() {
@@ -105,18 +110,19 @@
       <section class="section-block"><div class="section-title-row"><div><span class="overline">REQUEST HISTORY</span><h2>Membership changes</h2></div></div>${requests.length ? `<div class="table-wrap"><table class="customer-table"><thead><tr><th>REQUESTED TIER</th><th>SUBMITTED</th><th>STATUS</th><th>DECISION</th></tr></thead><tbody>${requests.map(r => `<tr><td class="transaction-title">${esc(r.requestedTier)}</td><td>${esc(fmtDate(r.requestedAt))}</td><td>${statusTag(r.status)}</td><td>${esc(r.decisionReason || 'Pending review')}</td></tr>`).join('')}</tbody></table></div>` : empty('No membership requests', 'If you request an upgrade, its progress will appear here.')}</section>`;
   }
   async function renderTransfers() {
+    state.transferPayload = null;
     const eligibleAccounts = state.accounts.filter(a => a.status === 'OPEN');
-    return `${heading('INTERNAL TRANSFER', 'Send money to a NordBank customer', 'Transfers are simulated internally and settled immediately after you confirm.', '')}
-      <div class="transfer-steps"><span class="transfer-step active" id="transferStep1"><i>1</i> Details</span><span class="transfer-step" id="transferStep2"><i>2</i> Review</span><span class="transfer-step" id="transferStep3"><i>3</i> Confirmation</span></div>
-      <section class="data-card review-card" id="transferFormPanel"><form id="transferForm"><div class="form-grid-customer">
+    return `${heading('INTERNAL TRANSFER', 'Send money to a Baltic Bank customer', 'Transfers are simulated internally and settled immediately after you confirm.', '')}
+      <div class="transfer-steps"><span class="transfer-step active" id="transferStep1"><i>1</i> Recipient</span><span class="transfer-step" id="transferStep2"><i>2</i> Amount</span><span class="transfer-step" id="transferStep3"><i>3</i> Review</span><span class="transfer-step" id="transferStep4"><i>4</i> Result</span></div>
+      <section class="data-card review-card" id="transferFormPanel"><form id="transferForm" data-stage="recipient"><div class="form-grid-customer">
         <label class="field-stack full"><span>From account</span><select class="customer-select" name="sourceAccountId" required>${eligibleAccounts.map(a => `<option value="${esc(a.id)}">${esc(a.type)} · ${esc(a.currency)} · ${esc(fmtMoney(a.balance,a.currency))} · ${esc(a.accountNumber.slice(-4))}</option>`).join('')}</select></label>
         <label class="field-stack full"><span>Recipient</span><input class="customer-input" id="recipientSearch" autocomplete="off" placeholder="Search by name or email" minlength="2" required><div id="recipientResults" class="recipient-results" hidden></div><div id="selectedRecipient" class="selected-recipient" hidden></div></label>
         <label class="field-stack full"><span>Recipient account</span><select class="customer-select" name="targetAccountId" id="recipientAccount" required disabled><option value="">Choose a recipient first</option></select></label>
-        <label class="field-stack"><span>Amount</span><input class="customer-input" type="number" name="amount" min="0.01" step="0.01" max="1000000" required placeholder="0.00"></label>
+        <label class="field-stack"><span>Amount <small id="availableToSend"></small></span><input class="customer-input" type="number" name="amount" min="0.01" step="0.01" max="1000000" required placeholder="0.00"></label>
         <label class="field-stack"><span>Currency</span><input class="customer-input" id="transferCurrency" value="EUR" readonly></label>
         <label class="field-stack full"><span>Description <small>Optional</small></span><input class="customer-input" name="description" maxlength="140" placeholder="What is this transfer for?"></label>
-      </div><div class="form-error-customer" id="transferError"></div><div class="form-actions-customer"><button class="button-customer primary" type="submit" ${eligibleAccounts.length ? '' : 'disabled'}>Review transfer →</button></div></form></section><section id="transferReviewPanel" class="data-card review-card" hidden></section><section id="transferSuccessPanel" class="data-card review-card" hidden></section>
-      <p class="info-note" style="margin-top:12px">Transfers can only be sent to another registered NordBank customer. Fees: none in this educational simulation. Make sure the recipient and account are correct before confirming.</p>`;
+      </div><div class="form-error-customer" id="transferError"></div><div class="form-actions-customer"><button class="button-customer" id="editRecipient" type="button">Back</button><button id="recipientNext" class="button-customer primary" type="button">Continue →</button><button class="button-customer primary" type="submit" ${eligibleAccounts.length ? '' : 'disabled'}>Review transfer →</button></div></form></section><section id="transferReviewPanel" class="data-card review-card" hidden></section><section id="transferSuccessPanel" class="data-card review-card" hidden></section>
+      <p class="info-note" style="margin-top:12px">Transfers can only be sent to another registered Baltic Bank customer. Fees: none in this educational simulation. Make sure the recipient and account are correct before confirming.</p>`;
   }
   function applyTransactionFilters() {
     const query = state.transactionFilter.toLowerCase();
@@ -133,7 +139,7 @@
   async function renderTransactions() {
     await loadTransactions();
     const accounts = state.accounts.map(a => `<option value="${esc(a.id)}" ${state.accountFilter===a.id?'selected':''}>${esc(a.type)} · ${esc(a.currency)} · ${esc(a.accountNumber.slice(-4))}</option>`).join('');
-    return `${heading('YOUR ACTIVITY', 'Transaction history', 'Search and review incoming and outgoing activity across your accounts.', '')}<div class="filter-row"><input class="customer-input" id="transactionSearch" placeholder="Search description, name or reference" value="${esc(state.transactionFilter)}"><select class="customer-select" id="transactionType"><option value="ALL">All activity</option><option value="TRANSFER">Transfers</option><option value="DEPOSIT">Deposits</option><option value="WITHDRAWAL">Withdrawals</option></select><select class="customer-select" id="transactionStatus"><option value="ALL">All statuses</option><option value="COMPLETED">Completed</option><option value="PENDING">Pending</option><option value="REJECTED">Rejected</option></select><select class="customer-select" id="transactionAccount"><option value="ALL">All accounts</option>${accounts}</select><input class="customer-input" id="transactionFrom" type="date" aria-label="From date"><input class="customer-input" id="transactionTo" type="date" aria-label="To date"><select class="customer-select" id="transactionSort"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="amount">Largest amount</option></select></div><div id="transactionResults">${transactionRows(state.transactions)}</div><div class="transaction-pagination" id="transactionCount"></div>`;
+    return `${heading('YOUR ACTIVITY', 'Transaction history', 'Search and review incoming and outgoing activity across your accounts.', '')}<div class="filter-row"><input class="customer-input" aria-label="Search transactions" id="transactionSearch" placeholder="Search description, name or reference" value="${esc(state.transactionFilter)}"><select class="customer-select" aria-label="Transaction type" id="transactionType"><option value="ALL">All activity</option><option value="TRANSFER">Transfers</option><option value="DEPOSIT">Deposits</option><option value="WITHDRAWAL">Withdrawals</option></select><select class="customer-select" aria-label="Status" id="transactionStatus"><option value="ALL">All statuses</option><option value="COMPLETED">Completed</option><option value="PENDING">Pending</option><option value="REJECTED">Rejected</option></select><select class="customer-select" aria-label="Account" id="transactionAccount"><option value="ALL">All accounts</option>${accounts}</select><input class="customer-input" id="transactionFrom" type="date" aria-label="From date"><input class="customer-input" id="transactionTo" type="date" aria-label="To date"><select class="customer-select" aria-label="Sort transactions" id="transactionSort"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="amount">Largest amount</option></select></div><div id="transactionResults">${transactionRows(state.transactions)}</div><div class="transaction-pagination" id="transactionCount"></div>`;
   }
   function monthSeries(items, count = 6) {
     const now = new Date(); const months = [];
@@ -144,19 +150,34 @@
   function drawChart(canvas, series, currency) {
     if (state.chart) { state.chart.destroy(); state.chart = null; }
     if (!window.Chart) { const parent = canvas.parentElement; parent.innerHTML = '<div class="empty-panel"><strong>Chart library unavailable</strong><p>Summary totals are available above. Reload when the chart service is reachable.</p></div>'; return; }
-    state.chart = new Chart(canvas, { type: 'bar', data: { labels: series.map(m => m.label), datasets: [{ label: 'Income', data: series.map(m => m.income), backgroundColor: '#5b9b7d', borderRadius: 5 }, { label: 'Expenses', data: series.map(m => m.expenses), backgroundColor: '#778faf', borderRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 7, font: { size: 9 } } }, tooltip: { callbacks: { label: context => `${context.dataset.label}: ${fmtMoney(context.raw,currency)}` } } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 8 } } }, y: { grid: { color: '#edf0f4' }, ticks: { font: { size: 8 }, callback: value => fmtMoney(value,currency) } } } } });
+    state.chart = new Chart(canvas, { type: 'bar', data: { labels: series.map(m => m.label), datasets: [{ label: 'Income', data: series.map(m => m.income), backgroundColor: '#386bff', borderRadius: 5 }, { label: 'Expenses', data: series.map(m => m.expenses), backgroundColor: '#9caecb', borderRadius: 5 }] }, options: { animation: !matchMedia('(prefers-reduced-motion: reduce)').matches, responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 7, font: { size: 9 } } }, tooltip: { callbacks: { label: context => `${context.dataset.label}: ${fmtMoney(context.raw,currency)}` } } }, scales: { x: { grid: { display: false }, ticks: { font: { size: 8 } } }, y: { grid: { color: '#edf0f4' }, ticks: { font: { size: 8 }, callback: value => fmtMoney(value,currency) } } } } });
   }
-  async function renderAnalytics() {
+  async function renderAnalytics(requestId) {
     await loadTransactions();
     const currencies = [...new Set([...state.transactions.map(t => t.currency), ...state.accounts.map(a => a.currency)])].sort();
     if (!state.analyticsCurrency || !currencies.includes(state.analyticsCurrency)) state.analyticsCurrency = currencies.includes('EUR') ? 'EUR' : currencies[0] || 'EUR';
-    const items = state.transactions.filter(t => t.currency === state.analyticsCurrency);
+    const now = new Date();
+    const since = new Date(now.getFullYear(), now.getMonth() - state.analyticsMonths + 1, 1);
+    const items = state.transactions.filter(t => t.currency === state.analyticsCurrency && new Date(t.occurredAt) >= since && new Date(t.occurredAt) <= now);
     const income = items.filter(t => t.incoming).reduce((s,t) => s + Number(t.amount), 0);
     const expenses = items.filter(t => !t.incoming).reduce((s,t) => s + Number(t.amount), 0);
     const net = income - expenses; const series = monthSeries(items, state.analyticsMonths);
+    const trend = series.map(month => items.filter(tx => {
+      const date = new Date(tx.occurredAt);
+      return month.key === date.getFullYear()+'-'+date.getMonth();
+    }).length);
+    const breakdown = {};
+    for (const tx of items.filter(tx=>!tx.incoming)) breakdown[tx.type]=(breakdown[tx.type] || 0)+Number(tx.amount);
     const averageMonthlySpending = expenses / Math.max(1, state.analyticsMonths);
-    setTimeout(() => { const canvas = $('#incomeExpenseChart'); if (canvas) drawChart(canvas, series, state.analyticsCurrency); }, 0);
-    return `${heading('FINANCIAL INSIGHTS', 'Understand your activity', 'Monthly income and expenses based on your recorded account transactions.', '')}<div class="filter-row analytics-filters"><label class="field-stack"><span>Currency</span><select class="customer-select" id="analyticsCurrency">${currencies.map(c=>`<option value="${esc(c)}" ${c===state.analyticsCurrency?'selected':''}>${esc(c)}</option>`).join('')}</select></label><label class="field-stack"><span>Period</span><select class="customer-select" id="analyticsPeriod"><option value="6" ${state.analyticsMonths===6?'selected':''}>Last 6 months</option><option value="12" ${state.analyticsMonths===12?'selected':''}>Last 12 months</option></select></label></div><div class="analytics-summary"><div class="analytics-value"><span>TOTAL INCOME · ${esc(state.analyticsCurrency)}</span><strong>${esc(fmtMoney(income,state.analyticsCurrency))}</strong></div><div class="analytics-value"><span>TOTAL EXPENSES · ${esc(state.analyticsCurrency)}</span><strong>${esc(fmtMoney(expenses,state.analyticsCurrency))}</strong></div><div class="analytics-value"><span>NET MOVEMENT · ${esc(state.analyticsCurrency)}</span><strong class="${net >= 0 ? 'amount-in' : 'amount-out'}">${esc(fmtMoney(net,state.analyticsCurrency))}</strong></div><div class="analytics-value"><span>MONTHLY AVG SPENDING</span><strong>${esc(fmtMoney(averageMonthlySpending,state.analyticsCurrency))}</strong></div><div class="analytics-value"><span>TRANSACTIONS</span><strong>${items.length}</strong></div></div><div class="analytics-grid"><section class="data-card chart-card"><div class="section-title-row"><div><span class="overline">LAST ${state.analyticsMonths} MONTHS · ${esc(state.analyticsCurrency)}</span><h2>Income and expenses</h2></div></div><div class="chart-container"><canvas id="incomeExpenseChart" aria-label="Monthly income and expenses chart"></canvas></div></section><aside class="data-card chart-card"><div class="section-title-row"><div><span class="overline">ACCOUNTS</span><h2>Balances by account</h2></div></div>${state.accounts.length ? `<div class="account-grid">${state.accounts.map(a => `<div class="profile-value"><span>${esc(a.type)} · ${esc(a.currency)}</span><strong>${esc(fmtMoney(a.balance,a.currency))}</strong></div>`).join('')}</div>` : empty('No account data','Accounts will appear here.') }<p class="info-note" style="margin-top:12px">Card purchase analytics are unavailable because the simulation does not process card payments. Merchant categories are not inferred.</p></aside></div><section class="section-block"><div class="section-title-row"><div><span class="overline">RECENT ACTIVITY</span><h2>Recorded transactions</h2></div><button class="text-button" data-page="transactions">Open history →</button></div>${recentTransactions(state.transactions,8)}</section>`;
+    setTimeout(() => {
+      if (requestId !== latestPageRequest) return;
+      const canvas = $('#incomeExpenseChart');
+      if (!canvas) return;
+      drawChart(canvas, series, state.analyticsCurrency);
+      if (!window.Chart) return;
+      extraCharts.push(new Chart($('#trendChart'), {type:'line',data:{labels:series.map(m=>m.label),datasets:[{label:'Transactions',data:trend,borderColor:'#386bff',tension:.2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}}));
+      if ($('#spendingChart')) extraCharts.push(new Chart($('#spendingChart'),{type:'doughnut',data:{labels:Object.keys(breakdown),datasets:[{data:Object.values(breakdown),backgroundColor:['#315ac1','#91a7d0','#c7a76c']}]},options:{cutout:'74%',maintainAspectRatio:false,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:ctx=>fmtMoney(ctx.raw,state.analyticsCurrency)}}}}})); }, 0);
+    return `${heading('FINANCIAL INSIGHTS', 'Understand your activity', 'Monthly income and expenses based on your recorded account transactions.', '')}<div class="filter-row analytics-filters"><label class="field-stack"><span>Currency</span><select class="customer-select" id="analyticsCurrency">${currencies.map(c=>`<option value="${esc(c)}" ${c===state.analyticsCurrency?'selected':''}>${esc(c)}</option>`).join('')}</select></label><label class="field-stack"><span>Period</span><select class="customer-select" id="analyticsPeriod"><option value="3" ${state.analyticsMonths===3?'selected':''}>Last 3 months</option><option value="6" ${state.analyticsMonths===6?'selected':''}>Last 6 months</option><option value="12" ${state.analyticsMonths===12?'selected':''}>Last 12 months</option></select></label></div><div class="analytics-summary"><div class="analytics-value"><span>TOTAL INCOME · ${esc(state.analyticsCurrency)}</span><strong>${esc(fmtMoney(income,state.analyticsCurrency))}</strong></div><div class="analytics-value"><span>TOTAL EXPENSES · ${esc(state.analyticsCurrency)}</span><strong>${esc(fmtMoney(expenses,state.analyticsCurrency))}</strong></div><div class="analytics-value"><span>NET MOVEMENT · ${esc(state.analyticsCurrency)}</span><strong class="${net >= 0 ? 'amount-in' : 'amount-out'}">${esc(fmtMoney(net,state.analyticsCurrency))}</strong></div><div class="analytics-value"><span>MONTHLY AVG SPENDING</span><strong>${esc(fmtMoney(averageMonthlySpending,state.analyticsCurrency))}</strong></div><div class="analytics-value"><span>TRANSACTIONS</span><strong>${items.length}</strong></div></div><div class="analytics-grid"><section class="data-card chart-card"><div class="section-title-row"><div><span class="overline">LAST ${state.analyticsMonths} MONTHS · ${esc(state.analyticsCurrency)}</span><h2>Income and expenses</h2></div></div><div class="chart-container"><canvas id="incomeExpenseChart" role="img" aria-label="Monthly income and expenses chart"></canvas></div></section><aside class="data-card chart-card"><div class="section-title-row"><div><span class="overline">ACCOUNTS</span><h2>Balances by account</h2></div></div>${state.accounts.length ? `<div class="account-grid">${state.accounts.map(a => `<div class="profile-value"><span>${esc(a.type)} · ${esc(a.currency)}</span><strong>${esc(fmtMoney(a.balance,a.currency))}</strong></div>`).join('')}</div>` : empty('No account data','Accounts will appear here.') }<p class="info-note" style="margin-top:12px">Card purchase analytics are unavailable because the simulation does not process card payments. Merchant categories are not inferred.</p></aside></div><div class="analytics-grid section-block"><section class="surface"><h2>Transaction trend</h2><div class="chart-container"><canvas id="trendChart" aria-label="Monthly transaction count"></canvas></div></section><section class="surface"><h2>Outgoing payments by type</h2>${expenses?`<div class="chart-container"><canvas id="spendingChart" aria-label="Outgoing amount by transaction type"></canvas></div>`:empty('No outgoing payments','No spending in the selected period.')}</section></div><section class="section-block"><div class="section-title-row"><div><span class="overline">RECENT ACTIVITY</span><h2>Recorded transactions</h2></div><button class="text-button" data-page="transactions">Open history →</button></div>${recentTransactions(items,8)}</section>`;
   }
   async function renderLoans() {
     const loans = await api('/api/customer/loans'); state.loans = loans;
@@ -172,38 +193,73 @@
     const p = state.profile;
     return `${heading('ACCOUNT SETTINGS', 'Your profile', 'Your personal information and account identifiers. Contact support if a protected detail needs updating.', '')}<div class="profile-summary"><div class="profile-value"><span>FULL NAME</span><strong>${esc(p.firstName)} ${esc(p.lastName)}</strong></div><div class="profile-value"><span>EMAIL ADDRESS</span><strong>${esc(p.email)}</strong></div><div class="profile-value"><span>CUSTOMER NUMBER</span><strong>${esc(p.customerNumber)}</strong></div><div class="profile-value"><span>MEMBERSHIP</span><strong>${esc(p.membershipTier)}</strong></div><div class="profile-value"><span>MEMBER SINCE</span><strong>${esc(fmtDate(p.joinedAt))}</strong></div><div class="profile-value"><span>PHONE</span><strong>${esc(p.phone || 'Not provided')}</strong></div></div><section class="section-block"><div class="section-title-row"><div><span class="overline">CONTACT DETAILS</span><h2>Update your phone number</h2></div></div><form class="data-card review-card" id="profileForm"><label class="field-stack"><span>Phone number</span><input class="customer-input" type="tel" name="phone" maxlength="32" value="${esc(p.phone || '')}" placeholder="+371 2000 0000"></label><div class="form-error-customer" id="profileError"></div><div class="form-actions-customer"><button class="button-customer primary" type="submit">Save phone number</button></div></form></section><p class="info-note" style="margin-top:14px">To change your email address or password, contact support so your identity can be verified.</p>`;
   }
+  const extraCharts=[];
+  let latestPageRequest = 0;
+
+  function replacePageContent(container, markup) {
+    if (state.chart) { state.chart.destroy(); state.chart = null; }
+    extraCharts.splice(0).forEach(chart=>chart.destroy());
+    const view = document.createElement('div');
+    view.className = 'banking-view';
+    view.dataset.section = state.page;
+    view.innerHTML = markup;
+    container.replaceChildren(view);
+  }
+
   async function renderPage(page) {
-    state.page = page; $('#customerPageTitle').textContent = title(page); $$('.customer-nav a').forEach(a => a.classList.toggle('selected', a.dataset.page === page));
-    $('#customerPage').innerHTML = '<div class="page-loading"><span></span>Loading your information…</div>';
+    const requestId = ++latestPageRequest;
+    const container = $('#customerPage');
+    container.setAttribute('aria-busy', 'true');
+    if (container.firstElementChild) container.firstElementChild.inert = true;
+    state.selectedRecipient = null;
+    state.page = page; $('#customerPageTitle').textContent = title(page); $$('.customer-nav a, .mobile-tabs a').forEach(a => {
+      const active = a.dataset.page === page;
+      a.classList.toggle('selected', active);
+      if (active) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
+    });
+    document.title = title(page) + ' | Baltic Bank';
     try {
       await loadBase();
+      if (requestId !== latestPageRequest) return;
       let markup;
       if (page === 'dashboard') {
-        const [transactions, loans, support] = await Promise.all([loadTransactions(), api('/api/customer/loans'), api('/api/customer/support')]);
-        state.transactions = transactions; state.loans = loans; state.support = support; markup = renderDashboard();
+        await loadTransactions();
+        markup = renderDashboard();
       } else if (page === 'accounts') markup = await renderAccounts();
       else if (page === 'cards') markup = await renderCards();
       else if (page === 'card-tiers') markup = await renderTiers();
       else if (page === 'transfers') markup = await renderTransfers();
       else if (page === 'transactions') markup = await renderTransactions();
-      else if (page === 'analytics') markup = await renderAnalytics();
+      else if (page === 'analytics') markup = await renderAnalytics(requestId);
       else if (page === 'loans') markup = await renderLoans();
       else if (page === 'support') markup = await renderSupport();
       else markup = renderProfile();
-      if (state.page !== page) return;
-      $('#customerPage').innerHTML = markup;
+      if (requestId !== latestPageRequest) return;
+      replacePageContent(container, markup);
+      if (page === 'dashboard') drawDashboardChart();
+      if (page === 'transfers' && state.accounts.length) updateTransferCurrency();
       if (page === 'transactions') {
         $('#transactionType').value = state.transactionType;
         $('#transactionStatus').value = state.transactionStatus;
         $('#transactionSort').value = state.transactionSort;
         refreshTransactionTable();
       }
-    } catch (error) { $('#customerPage').innerHTML = `${heading('SECURE CUSTOMER PORTAL', title(page), 'We could not load this section right now.', '')}${errorHtml(error.message)}<button class="button-customer" style="margin-top:12px" data-retry-page="${esc(page)}">Try again</button>`; }
+    } catch (error) {
+      if (requestId !== latestPageRequest) return;
+      const message = heading('SECURE CUSTOMER PORTAL', title(page), 'We could not load this section right now.');
+      replacePageContent(container, `${message}${errorHtml(error.message)}<button class="button-customer" data-retry-page="${esc(page)}">Try again</button>`);
+    } finally {
+      if (requestId === latestPageRequest) container.removeAttribute('aria-busy');
+    }
   }
 
   document.addEventListener('click', event => {
     const nav = event.target.closest('[data-page]');
-    if (nav) { event.preventDefault(); $('#profilePopover').hidden = true; $('#customerSidebar').classList.remove('open'); renderPage(nav.dataset.page); return; }
+    if (nav?.matches('a') && (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey)) return;
+    if (nav) { event.preventDefault(); setProfileOpen(false); $('#customerSidebar').classList.remove('open'); $('#mobileNavToggle').setAttribute('aria-expanded','false'); if (state.page !== nav.dataset.page) history.pushState(null,'','/client/'+nav.dataset.page);
+      if ($('#serviceFinder').open) $('#serviceFinder').close();
+      if (nav.dataset.page !== state.page) renderPage(nav.dataset.page);
+      window.scrollTo(0,0); $('#customerPage').focus({preventScroll:true}); return; }
     const close = event.target.closest('[data-close-dialog]'); if (close) { close.closest('dialog').close(); return; }
     const retry = event.target.closest('[data-retry-page]'); if (retry) { renderPage(retry.dataset.retryPage); return; }
     const action = event.target.closest('[data-action]')?.dataset.action;
@@ -218,14 +274,27 @@
     const support = event.target.closest('[data-support-id]'); if (support) showSupport(support.dataset.supportId);
   });
   document.addEventListener('keydown', event => { if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('[data-transaction-id]')) { event.preventDefault(); showTransaction(event.target.dataset.transactionId); } });
-  $('#customerProfileButton').addEventListener('click', () => { $('#profilePopover').hidden = !$('#profilePopover').hidden; });
-  document.addEventListener('click', event => { if (!event.target.closest('.customer-top-actions')) $('#profilePopover').hidden = true; });
+  function setProfileOpen(open) {
+    $('#profilePopover').hidden = !open;
+    $('#customerProfileButton').setAttribute('aria-expanded', String(open));
+  }
+  $('#customerProfileButton').addEventListener('click', () => setProfileOpen($('#profilePopover').hidden));
+  document.addEventListener('click', event => { if (!event.target.closest('.customer-top-actions')) setProfileOpen(false); });
   $('#mobileNavToggle').addEventListener('click', () => { const open = $('#customerSidebar').classList.toggle('open'); $('#mobileNavToggle').setAttribute('aria-expanded', String(open)); });
   $('#customerLogout').addEventListener('submit', async event => { event.preventDefault(); try { if (!state.csrf) await getCsrf(); const form = new URLSearchParams(); form.set(state.csrf.parameterName, state.csrf.token); const result = await fetch('/logout/client', { method: 'POST', body: form, credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }); if (!result.ok) throw new Error('Could not sign out securely.'); location.assign('/login/client?logout'); } catch (error) { toast(error.message, 'error'); } });
 
   $('#customerPage').addEventListener('click', event => {
-    if (event.target.id === 'balanceVisibility') { state.balanceVisible = !state.balanceVisible; renderPage('dashboard'); return; }
-    if (event.target.id === 'transferCancel') { $('#transferReviewPanel').hidden = true; $('#transferFormPanel').hidden = false; step(1); }
+    if (event.target.id === 'balanceVisibility') { state.balanceVisible = !state.balanceVisible;
+      $('.balance-value').textContent = state.balanceVisible ? totalLabel() : '••••••••';
+      event.target.textContent = state.balanceVisible ? 'Hide balance' : 'Show balance';
+      event.target.setAttribute('aria-pressed', String(state.balanceVisible)); return; }
+    if (event.target.id === 'changeRecipient') { $('#recipientSearch').value = ''; searchRecipients(''); $('#recipientSearch').focus(); }
+    if (event.target.id === 'recipientNext') {
+      if (!state.selectedRecipient || !$('#recipientAccount').value || $('#recipientAccount').disabled) { $('#transferError').textContent = 'Choose a recipient with an eligible account.'; return; }
+      $('#transferError').textContent = ''; $('#transferForm').dataset.stage='amount'; step(2); $('#transferForm [name=amount]').focus();
+    }
+    if (event.target.id === 'editRecipient') { $('#transferForm').dataset.stage='recipient'; step(1); $('#recipientSearch').focus(); }
+    if (event.target.id === 'transferCancel') { $('#transferReviewPanel').hidden = true; $('#transferFormPanel').hidden = false; step(2); }
     if (event.target.id === 'transferConfirm') submitTransfer(event.target);
     if (event.target.id === 'transactionSearch') { state.transactionFilter = event.target.value; state.transactionPage = 1; }
     if (event.target.id === 'transactionType') state.transactionType = event.target.value;
@@ -239,7 +308,7 @@
     if (event.target.name === 'amount' && event.target.closest('#loanForm')) updateLoanEstimate();
   });
   $('#customerPage').addEventListener('change', event => {
-    if (event.target.name === 'sourceAccountId') updateTransferCurrency();
+    if (event.target.name === 'sourceAccountId') { $('#recipientSearch').value=''; searchRecipients(''); updateTransferCurrency(); }
     if (event.target.id === 'transactionType') { state.transactionType = event.target.value; state.transactionPage = 1; refreshTransactionTable(); }
     if (event.target.id === 'transactionStatus') { state.transactionStatus = event.target.value; state.transactionPage = 1; refreshTransactionTable(); }
     if (event.target.id === 'transactionSort') { state.transactionSort = event.target.value; state.transactionPage = 1; refreshTransactionTable(); }
@@ -261,9 +330,8 @@
   function updateTransferCurrency() {
     const sourceId = $('#transferForm [name="sourceAccountId"]')?.value;
     const source = state.accounts.find(a => a.id === sourceId);
-    const select = $('#recipientAccount');
-    const target = select && [...select.options].find(o => o.value === select.value);
-    $('#transferCurrency').value = target?.dataset.currency || source?.currency || 'EUR';
+    $('#transferCurrency').value = source?.currency || 'EUR';
+    $('#availableToSend').textContent = source ? fmtMoney(source.balance,source.currency)+' available' : '';
   }
   async function searchRecipients(value) {
     clearTimeout(state.recipientTimer); state.selectedRecipient = null; $('#selectedRecipient').hidden = true; $('#recipientAccount').disabled = true;
@@ -272,10 +340,10 @@
     state.recipientTimer = setTimeout(async () => {
       try {
         const results = await api(`/api/customer/recipients?q=${encodeURIComponent(value.trim())}`);
-        if (value.trim() !== $('#recipientSearch').value.trim()) return;
+        if (value.trim() !== $('#recipientSearch')?.value.trim()) return;
         $('#recipientResults').innerHTML = results.length ? results.map(r => `<button class="recipient-option" type="button" data-recipient-id="${esc(r.id)}"><span><strong>${esc(r.firstName)} ${esc(r.lastName)}</strong><small>${esc(r.maskedEmail)}</small></span><span>Choose →</span></button>`).join('') : '<div class="inline-message">No eligible registered customers found.</div>';
         $('#recipientResults').dataset.recipients = JSON.stringify(results);
-      } catch (error) { $('#recipientResults').innerHTML = `<div class="inline-message">${esc(error.message)}</div>`; }
+      } catch (error) { if (!$('#recipientResults')) return; $('#recipientResults').innerHTML = `<div class="inline-message">${esc(error.message)}</div>`; }
     }, 260);
   }
   $('#customerPage').addEventListener('click', event => {
@@ -292,7 +360,7 @@
     $('#recipientAccount').disabled = !options.length;
     updateTransferCurrency();
   });
-  function step(n) { [1,2,3].forEach(i => $(`#transferStep${i}`)?.classList.toggle('active', i === n)); }
+  function step(n) { [1,2,3,4].forEach(i => $(`#transferStep${i}`)?.classList.toggle('active', i === n)); }
   function reviewTransfer(form) {
     const data = new FormData(form); const source = state.accounts.find(a => a.id === data.get('sourceAccountId'));
     const target = state.selectedRecipient?.accounts.find(a => a.id === data.get('targetAccountId'));
@@ -301,26 +369,33 @@
     if (!Number.isFinite(amount) || amount <= 0) return $('#transferError').textContent = 'Enter a valid amount greater than zero.';
     if (amount > Number(source.balance)) return $('#transferError').textContent = 'The amount exceeds the available balance.';
     state.transferPayload = { sourceAccountId: source.id, targetAccountId: target.id, amount: data.get('amount'), description: String(data.get('description') || '').trim(), idempotencyKey: crypto.randomUUID() };
-    $('#transferReviewPanel').innerHTML = `<div class="section-title-row"><div><span class="overline">CHECK BEFORE SENDING</span><h2>Review transfer</h2></div></div><div class="review-row"><span>From account</span><strong>${esc(source.type)} · ${esc(source.accountNumber.slice(-4))}</strong></div><div class="review-row"><span>To</span><strong>${esc(state.selectedRecipient.firstName)} ${esc(state.selectedRecipient.lastName)}</strong></div><div class="review-row"><span>Recipient account</span><strong>${esc(target.maskedAccount)}</strong></div><div class="review-row"><span>Amount</span><strong>${esc(fmtMoney(amount,source.currency))}</strong></div><div class="review-row"><span>Fee</span><strong>${esc(fmtMoney(0,source.currency))}</strong></div><div class="review-row"><span>Description</span><strong>${esc(state.transferPayload.description || '—')}</strong></div><div class="form-actions-customer"><button id="transferCancel" class="button-customer" type="button">Edit details</button><button id="transferConfirm" class="button-customer primary" type="button">Confirm transfer</button></div>`;
-    $('#transferFormPanel').hidden = true; $('#transferReviewPanel').hidden = false; step(2);
+    $('#transferReviewPanel').innerHTML = `<div class="section-title-row"><div><span class="overline">CHECK BEFORE SENDING</span><h2>Review transfer</h2></div></div><div class="review-row"><span>From account</span><strong>${esc(source.type)} · ${esc(source.accountNumber.slice(-4))}</strong></div><div class="review-row"><span>To</span><strong>${esc(state.selectedRecipient.firstName)} ${esc(state.selectedRecipient.lastName)}</strong></div><div class="review-row"><span>Recipient account</span><strong>${esc(target.maskedAccount)}</strong></div><div class="review-row"><span>Amount</span><strong>${esc(fmtMoney(amount,source.currency))}</strong></div><div class="review-row"><span>Fee</span><strong>${esc(fmtMoney(0,source.currency))}</strong></div><div class="review-row"><span>Description</span><strong>${esc(state.transferPayload.description || '—')}</strong></div><div class="review-row"><span>Total to send</span><strong>${esc(fmtMoney(amount,source.currency))}</strong></div><div id="transferFailure" role="alert"></div><div class="form-actions-customer"><button id="transferCancel" class="button-customer" type="button">Edit details</button><button id="transferConfirm" class="button-customer primary" type="button">Confirm transfer</button></div>`;
+    $('#transferFormPanel').hidden = true; $('#transferReviewPanel').hidden = false; step(3);
   }
+  function setButtonBusy(button, busy) {
+    button.disabled = busy;
+    button.setAttribute('aria-busy', String(busy));
+  }
+
   async function submitTransfer(button) {
     if (!state.transferPayload || button.disabled) return;
-    button.disabled = true; button.textContent = 'Sending securely…';
+    setButtonBusy(button, true); button.textContent = 'Sending securely…';
     try {
       const transfer = await api('/api/customer/transfers', { method: 'POST', body: JSON.stringify(state.transferPayload) });
-      state.transferPayload = null; step(3);
+      if (!button.isConnected) return;
+      state.transferPayload = null; step(4);
       $('#transferReviewPanel').hidden = true; $('#transferSuccessPanel').hidden = false;
       $('#transferSuccessPanel').innerHTML = `<div class="success-mark">✓</div><span class="overline">TRANSFER COMPLETE</span><h2>Money sent successfully</h2><p class="auth-subtitle">Your simulated transfer has been recorded.</p><div class="review-row"><span>Amount</span><strong>${esc(fmtMoney(transfer.amount,transfer.currency))}</strong></div><div class="review-row"><span>Reference</span><strong>${esc(transfer.reference)}</strong></div><div class="review-row"><span>Recipient</span><strong>${esc(state.selectedRecipient.firstName)} ${esc(state.selectedRecipient.lastName)}</strong></div><div class="review-row"><span>Sent</span><strong>${esc(fmtDate(transfer.occurredAt,true))}</strong></div><div class="form-actions-customer"><button class="button-customer" data-page="transactions">View transactions</button><button class="button-customer primary" data-page="dashboard">Return to overview</button></div>`;
-      await loadBase(); toast('Transfer completed successfully.');
-    } catch (error) { button.disabled = false; button.textContent = 'Try again'; toast(error.message, 'error'); }
+      toast('Transfer completed successfully.');
+    } catch (error) { setButtonBusy(button, false); button.textContent = 'Try again'; if ($('#transferFailure')) $('#transferFailure').textContent = error.message; }
   }
   async function submitCardRequest(form) {
-    const button = $('button[type="submit"]', form); button.disabled = true;
+    const button = $('button[type="submit"]', form); setButtonBusy(button, true);
     try { const data = Object.fromEntries(new FormData(form)); await api('/api/customer/cards', { method: 'POST', body: JSON.stringify(data) }); $('#cardRequestDialog').close(); toast('Card request submitted.'); renderPage('cards'); }
-    catch (error) { $('#cardRequestError').textContent = error.message; button.disabled = false; }
+    catch (error) { $('#cardRequestError').textContent = error.message; setButtonBusy(button, false); }
   }
   async function updateCard(id, status) {
+    if (status !== 'BLOCKED' && !confirm(status === 'ACTIVE' ? 'Unfreeze this card?' : 'Freeze this card?')) return;
     if (status === 'BLOCKED' && !confirm('Permanently block this card? This cannot be undone.')) return;
     try { await api(`/api/customer/cards/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ status }) }); toast(status === 'BLOCKED' ? 'Card blocked.' : status === 'FROZEN' ? 'Card frozen.' : 'Card is active.'); renderPage('cards'); }
     catch (error) { toast(error.message, 'error'); }
@@ -328,24 +403,108 @@
   async function updateAccountStatus(button) {
     const { accountId: id, accountAction: status } = button.dataset;
     if (status === 'FROZEN' && !confirm('Freeze this account? Deposits, withdrawals, and incoming or outgoing transfers will be unavailable until you unfreeze it.')) return;
-    button.disabled = true;
+    setButtonBusy(button, true);
     try {
       await api(`/api/customer/accounts/${encodeURIComponent(id)}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
       toast(status === 'FROZEN' ? 'Account frozen.' : 'Account unfrozen.');
       renderPage('accounts');
     } catch (error) {
-      button.disabled = false;
+      setButtonBusy(button, false);
       toast(error.message, 'error');
     }
   }
   async function submitMembership(tier) { try { await api('/api/customer/membership-requests', { method: 'POST', body: JSON.stringify({ tier }) }); toast('Membership upgrade request sent for review.'); renderPage('card-tiers'); } catch (error) { toast(error.message, 'error'); } }
   function updateLoanEstimate() { const form = $('#loanForm'); if (!form) return; const amount = Number(form.elements.amount.value); const months = Number(form.elements.termMonths.value); $('#loanEstimate').textContent = amount > 0 ? `${fmtMoney(monthlyPayment(amount,months))} / month` : '—'; }
-  async function submitLoan(form) { const button = $('button[type="submit"]', form); button.disabled = true; try { const data = Object.fromEntries(new FormData(form)); data.amount = Number(data.amount); data.termMonths = Number(data.termMonths); await api('/api/customer/loans', { method: 'POST', body: JSON.stringify(data) }); $('#loanDialog').close(); toast('Loan application submitted for review.'); renderPage('loans'); } catch (error) { $('#loanError').textContent = error.message; button.disabled = false; } }
-  async function submitSupport(form) { const button = $('button[type="submit"]', form); button.disabled = true; try { const data = Object.fromEntries(new FormData(form)); await api('/api/customer/support', { method: 'POST', body: JSON.stringify(data) }); $('#supportDialog').close(); toast('Support request sent.'); renderPage('support'); } catch (error) { $('#supportError').textContent = error.message; button.disabled = false; } }
-  async function updateProfile(form) { const button = $('button[type="submit"]', form); button.disabled = true; try { await api('/api/customer/me', { method: 'PATCH', body: JSON.stringify({ phone: form.elements.phone.value }) }); toast('Phone number updated.'); renderPage('profile'); } catch (error) { $('#profileError').textContent = error.message; button.disabled = false; } }
+  async function submitLoan(form) { const button = $('button[type="submit"]', form); setButtonBusy(button, true); try { const data = Object.fromEntries(new FormData(form)); data.amount = Number(data.amount); data.termMonths = Number(data.termMonths); await api('/api/customer/loans', { method: 'POST', body: JSON.stringify(data) }); $('#loanDialog').close(); toast('Loan application submitted for review.'); renderPage('loans'); } catch (error) { $('#loanError').textContent = error.message; setButtonBusy(button, false); } }
+  async function submitSupport(form) { const button = $('button[type="submit"]', form); setButtonBusy(button, true); try { const data = Object.fromEntries(new FormData(form)); await api('/api/customer/support', { method: 'POST', body: JSON.stringify(data) }); $('#supportDialog').close(); toast('Support request sent.'); renderPage('support'); } catch (error) { $('#supportError').textContent = error.message; setButtonBusy(button, false); } }
+  async function updateProfile(form) { const button = $('button[type="submit"]', form); setButtonBusy(button, true); try { await api('/api/customer/me', { method: 'PATCH', body: JSON.stringify({ phone: form.elements.phone.value }) }); toast('Phone number updated.'); renderPage('profile'); } catch (error) { $('#profileError').textContent = error.message; setButtonBusy(button, false); } }
   function refreshTransactionTable() { const results = $('#transactionResults'); if (!results) return; const filtered = applyTransactionFilters(); const pageSize = 25; const pages = Math.max(1, Math.ceil(filtered.length / pageSize)); state.transactionPage = Math.min(state.transactionPage, pages); results.innerHTML = transactionRows(filtered.slice((state.transactionPage - 1) * pageSize, state.transactionPage * pageSize)); $('#transactionCount').innerHTML = `<span>${filtered.length} of ${state.transactions.length} transactions · Page ${state.transactionPage} of ${pages}</span><span><button class="button-customer small" data-tx-page="${Math.max(1,state.transactionPage-1)}" ${state.transactionPage===1?'disabled':''}>Previous</button><button class="button-customer small" data-tx-page="${Math.min(pages,state.transactionPage+1)}" ${state.transactionPage===pages?'disabled':''}>Next</button></span>`; }
-  async function showTransaction(id) { try { const tx = await api(`/api/customer/transactions/${encodeURIComponent(id)}`); const amount = `${tx.incoming ? '+' : '−'}${fmtMoney(tx.amount,tx.currency)}`; $('#transactionDialogBody').innerHTML = `<span class="overline">TRANSACTION DETAILS</span><h2>${esc(tx.description || tx.type.replaceAll('_',' '))}</h2><div class="transaction-amount-large ${tx.incoming ? 'amount-in' : 'amount-out'}">${esc(amount)}</div><div class="review-row"><span>Reference</span><strong>${esc(tx.reference)}</strong></div><div class="review-row"><span>Date and time</span><strong>${esc(fmtDate(tx.occurredAt,true))}</strong></div><div class="review-row"><span>Type</span><strong>${esc(tx.type.replaceAll('_',' '))}</strong></div><div class="review-row"><span>Account</span><strong>${esc(tx.accountLastFour || '—')}</strong></div><div class="review-row"><span>Counterparty</span><strong>${esc(tx.otherParty || 'NordBank')}</strong></div><div class="review-row"><span>Status</span><strong>${statusTag(tx.status)}</strong></div>`; $('#transactionDialog').showModal(); } catch (error) { toast(error.message,'error'); } }
-  async function showSupport(id) { try { const r = await api(`/api/customer/support/${encodeURIComponent(id)}`); $('#transactionDialogBody').innerHTML = `<span class="overline">CUSTOMER SUPPORT</span><h2>${esc(r.subject)}</h2><div class="review-row"><span>Request</span><strong>${esc(r.id.slice(0,8).toUpperCase())}</strong></div><div class="review-row"><span>Category</span><strong>${esc(r.category)}</strong></div><div class="review-row"><span>Status</span><strong>${statusTag(r.status)}</strong></div><section class="section-block"><span class="overline">YOUR MESSAGE</span><p>${esc(r.message)}</p></section><section class="section-block"><span class="overline">NORDBANK RESPONSE</span><p>${esc(r.employeeResponse || 'Our team has not responded yet.')}</p></section>`; $('#transactionDialog').showModal(); } catch (error) { toast(error.message,'error'); } }
-  function start() { renderPage('dashboard'); }
+  async function showTransaction(id) { try { const tx = await api(`/api/customer/transactions/${encodeURIComponent(id)}`); const amount = `${tx.incoming ? '+' : '−'}${fmtMoney(tx.amount,tx.currency)}`; $('#transactionDialogBody').innerHTML = `<span class="overline">TRANSACTION DETAILS</span><h2>${esc(tx.description || tx.type.replaceAll('_',' '))}</h2><div class="transaction-amount-large ${tx.incoming ? 'amount-in' : 'amount-out'}">${esc(amount)}</div><div class="review-row"><span>Reference</span><strong>${esc(tx.reference)}</strong></div><div class="review-row"><span>Date and time</span><strong>${esc(fmtDate(tx.occurredAt,true))}</strong></div><div class="review-row"><span>Type</span><strong>${esc(tx.type.replaceAll('_',' '))}</strong></div><div class="review-row"><span>Account</span><strong>${esc(tx.accountLastFour || '—')}</strong></div><div class="review-row"><span>Counterparty</span><strong>${esc(tx.otherParty || 'Baltic Bank')}</strong></div><div class="review-row"><span>Status</span><strong>${statusTag(tx.status)}</strong></div>`; $('#transactionDialog').showModal(); } catch (error) { toast(error.message,'error'); } }
+  async function showSupport(id) { try { const r = await api(`/api/customer/support/${encodeURIComponent(id)}`); $('#transactionDialogBody').innerHTML = `<span class="overline">CUSTOMER SUPPORT</span><h2>${esc(r.subject)}</h2><div class="review-row"><span>Request</span><strong>${esc(r.id.slice(0,8).toUpperCase())}</strong></div><div class="review-row"><span>Category</span><strong>${esc(r.category)}</strong></div><div class="review-row"><span>Status</span><strong>${statusTag(r.status)}</strong></div><section class="section-block"><span class="overline">YOUR MESSAGE</span><p>${esc(r.message)}</p></section><section class="section-block"><span class="overline">BALTIC BANK RESPONSE</span><p>${esc(r.employeeResponse || 'Our team has not responded yet.')}</p></section>`; $('#transactionDialog').showModal(); } catch (error) { toast(error.message,'error'); } }
+  function drawDashboardChart() {
+    const currency = state.accounts.find(a => a.status === 'OPEN')?.currency || 'EUR';
+    if (!$('#dashboardChart')) return;
+    drawChart($('#dashboardChart'), monthSeries(state.transactions.filter(t => t.currency === currency),state.analyticsMonths),currency);
+  }
+  document.addEventListener('change', event => {
+    if (event.target.id === 'dashboardPeriod') { state.analyticsMonths = Number(event.target.value); drawDashboardChart(); }
+  });
+  document.addEventListener('click', event => {
+    const shift = event.target.closest('[data-wallet-shift]');
+    if (shift) {
+      const strip=$('.wallet-strip');
+      const stride=strip.children[1].offsetLeft-strip.children[0].offsetLeft;
+      const index=Math.round(strip.scrollLeft/stride);
+      const target=(index+Number(shift.dataset.walletShift)+strip.children.length)%strip.children.length;
+      strip.scrollTo({left:target*stride,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+      return;
+    }
+    const button = event.target.closest('[data-card-view]');
+    if (!button) return;
+    const c = state.cards.find(card => card.id === button.dataset.cardView);
+    if (!c) return;
+    $('#transactionDialogBody').innerHTML = `<span class="overline">PAYMENT CARD</span><h2>${esc(c.tier)} · ${esc(c.lastFour)}</h2><div class="review-row">Status ${statusTag(c.status)}</div><div class="review-row">Linked account <strong>${esc(c.currency)} · ${esc(c.accountLastFour)}</strong></div><div class="review-row">Expires <strong>${esc(c.expiresOn.slice(0,7))}</strong></div><div class="review-row">Illustrative tier limit <strong>${fmtMoney(({STANDARD:1000,PREMIUM:3000,VIP:10000})[c.tier])} / day</strong></div>`;
+    $('#transactionDialog').showModal();
+  });
+  const rail = $('#railToggle');
+  rail.addEventListener('click', () => {
+    const collapsed = document.body.classList.toggle('rail-collapsed');
+    rail.setAttribute('aria-expanded',String(!collapsed));
+    rail.setAttribute('aria-label',collapsed?'Expand navigation':'Collapse navigation');
+  });
+  const notice = $('#notices');
+  function closeNotices() { notice.hidden=true; $('#noticeToggle').setAttribute('aria-expanded','false'); }
+  $('#noticeToggle').addEventListener('click', async () => {
+    if (!notice.hidden) { closeNotices(); return; }
+    setProfileOpen(false);
+    notice.hidden=false; $('#noticeToggle').setAttribute('aria-expanded','true');
+    notice.textContent='Loading request updates…';
+    try {
+      const groups = [['cards','Card','card-requests'],['card-tiers','Membership','membership-requests'],['loans','Loan','loans'],['support','Support','support']];
+      const results = await Promise.all(groups.map(async ([page,label,endpoint]) => (await api('/api/customer/'+endpoint)).map(item => ({page,label,item,date:item.updatedAt || item.requestedAt || item.createdAt}))));
+      const updates=results.flat().sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+      notice.innerHTML=updates.length?updates.map(({page,label,item,date})=>`<button data-page="${page}"><strong>${label} · ${esc(item.status.replaceAll('_',' '))}</strong><small>${esc(fmtDate(date))}</small></button>`).join(''):'No request updates yet.';
+    } catch(error) { notice.textContent=error.message; }
+  });
+  document.addEventListener('click',e=>{if (!e.target.closest('#noticeToggle') && (!e.target.closest('#notices') || e.target.closest('[data-page]'))) closeNotices();});
+  document.addEventListener('click',e=>{if (!e.target.closest('#customerSidebar,#mobileNavToggle')) { $('#customerSidebar').classList.remove('open'); $('#mobileNavToggle').setAttribute('aria-expanded','false'); }});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeNotices(); setProfileOpen(false); $('#customerSidebar').classList.remove('open'); $('#mobileNavToggle').setAttribute('aria-expanded','false');}});
+  const finder = $('#serviceFinder');
+  const query = $('#serviceQuery');
+  const services = $$('.customer-nav a');
+  const keywords = {dashboard:'home overview',accounts:'balance iban details',cards:'wallet freeze block',transfers:'pay payments recipient transfer',transactions:'activity history reference',analytics:'spending income expenses charts','card-tiers':'premium vip upgrade',loans:'credit borrow application',support:'help contact requests',profile:'phone settings personal'};
+  function filterServices() {
+    const term = query.value.trim().toLowerCase();
+    const matches = services.filter(link => (link.textContent+' '+keywords[link.dataset.page]).toLowerCase().includes(term));
+    const container = $('#serviceResults');
+    container.replaceChildren(...matches.map(link => {
+      const result = link.cloneNode(true);
+      result.classList.remove('selected');
+      result.removeAttribute('aria-current');
+      return result;
+    }));
+    $('#finderCount').textContent = matches.length ? matches.length+' matching services' : 'No services found. Try a different word.';
+  }
+  function openFinder() {
+    query.value = ''; filterServices(); finder.showModal(); query.focus();
+  }
+  $('#findPage').addEventListener('click',openFinder);
+  query.addEventListener('input',filterServices);
+  finder.addEventListener('keydown',event=>{
+    const links = $$('#serviceResults a');
+    if (event.key==='Enter' && event.target===query && links.length) {event.preventDefault(); links[0].click();}
+    if (links.length && ['ArrowDown','ArrowUp'].includes(event.key)) {
+      event.preventDefault();
+      const i=links.indexOf(document.activeElement);
+      links[i<0?(event.key==='ArrowDown'?0:links.length-1):(i+(event.key==='ArrowDown'?1:-1)+links.length)%links.length].focus();
+    }
+  });
+  document.addEventListener('keydown',event=>{
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase()==='k' && !document.querySelector('dialog[open]')) {
+      event.preventDefault(); openFinder();
+    }
+  });
+  function start() { renderPage(location.pathname.split('/').filter(Boolean).pop()?.replace(/^client$/,'dashboard') || 'dashboard'); }
+  window.addEventListener('popstate',start);
   start();
 })();

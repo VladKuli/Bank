@@ -4,17 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101f3e">
-  <meta name="description" content="NordBank staff workspace for secure client and account services.">
-  <title>NordBank | Staff workspace</title>
+  <meta name="description" content="Baltic Bank staff workspace for secure client and account services.">
+  <title>Baltic Bank | Staff workspace</title>
   <link rel="stylesheet" href="/css/app.css">
-  <link rel="stylesheet" href="/css/nordbank.css">
+  <link rel="stylesheet" href="/css/baltic-bank.css">
+    <link rel="stylesheet" href="/css/atelier.css">
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar">
-      <a class="brand" href="/" aria-label="NordBank home">
-        <span class="brand-mark" aria-hidden="true">N</span>
-        <span><strong>NordBank</strong><small>CLIENT SERVICES</small></span>
+      <a class="brand" href="/" aria-label="Baltic Bank home">
+        <span class="brand-mark" aria-hidden="true">B</span>
+        <span><strong>Baltic Bank</strong><small>CLIENT SERVICES</small></span>
       </a>
 
       <div class="side-label">WORKSPACE</div>
@@ -36,15 +37,14 @@
 
     <main class="main-content" id="workspace">
       <header class="topbar">
-        <div class="breadcrumbs"><span>NordBank</span><i>/</i><strong id="breadcrumbPage">Overview</strong></div>
+        <div class="breadcrumbs"><span>Baltic Bank</span><i>/</i><strong id="breadcrumbPage">Overview</strong></div>
         <div class="topbar-right"><span class="live-pill">STAFF WORKSPACE</span><span class="top-divider"></span><time id="clock" class="clock"></time></div>
       </header>
 
       <div id="overviewView">
         <section class="welcome-panel">
-          <div class="welcome-copy"><div class="eyebrow"><span class="eyebrow-line"></span> SECURE BANKING WORKSPACE</div><h1>Good service starts<br>with a <em>clear picture.</em></h1><p>Manage client relationships and account activity from one considered workspace.</p><div class="welcome-actions"><button class="button button-primary" type="button" data-open-clients>Explore clients <span aria-hidden="true">→</span></button><button class="button button-on-dark" type="button" id="overviewNewClient">Add a client <span aria-hidden="true">＋</span></button></div></div>
-          <div class="welcome-seal" aria-hidden="true"><span class="seal-orbit"></span><span class="seal-mark">N</span><span class="seal-caption">NORDBANK<br>STAFF PORTAL</span></div>
-          <div class="welcome-foot"><span><i class="live-dot"></i> Protected staff session</span><span>EUROPE · KYIV</span></div>
+          <div class="welcome-copy"><div class="eyebrow"><span class="eyebrow-line"></span> SECURE BANKING WORKSPACE</div><h1>Client services</h1><p>Review customer relationships, account activity and pending requests.</p><div class="welcome-actions"><button class="button button-primary" type="button" data-open-clients>Explore clients <span aria-hidden="true">→</span></button><button class="button button-on-dark" type="button" id="overviewNewClient">Add a client <span aria-hidden="true">＋</span></button></div></div>
+          <div class="welcome-seal" aria-hidden="true"><span class="seal-orbit"></span><span class="seal-mark">B</span><span class="seal-caption">BALTIC BANK<br>STAFF PORTAL</span></div>
         </section>
         <section class="overview-section" aria-label="Portfolio overview">
           <div class="section-heading"><div><span class="section-kicker">PORTFOLIO SNAPSHOT</span><h2>Your workspace at a glance</h2></div><button class="button button-quiet button-small" id="refreshOverview" type="button">Refresh overview <span aria-hidden="true">↻</span></button></div>
@@ -56,9 +56,9 @@
         </section>
         <section class="overview-lower">
           <div class="results-column"><div class="section-heading"><div><span class="section-kicker">RELATIONSHIPS</span><h2>Recently registered clients</h2></div><button class="text-link" type="button" data-open-clients>View directory <span aria-hidden="true">→</span></button></div><div class="results-card"><div class="table-head recent-table-head"><span>CLIENT</span><span>CONTACT</span><span>STATUS</span></div><div id="recentClients" class="client-results"><div class="loading-shimmer"></div><div class="loading-shimmer"></div></div></div></div>
-          <aside class="overview-aside"><div class="aside-heading"><span class="section-kicker">QUICK ACCESS</span><span class="aside-mark" aria-hidden="true">✳</span></div><h3>Thoughtful service,<br>made simpler.</h3><p>Open a client profile to review accounts, record a transaction, or see recent ledger activity.</p><button class="aside-link" type="button" data-open-clients>Go to client directory <span aria-hidden="true">↗</span></button><div class="aside-rule"></div><div class="aside-note"><span class="aside-note-icon" aria-hidden="true">⌁</span><span><strong>Every action is recorded</strong><small>Account changes are validated and stored in the ledger.</small></span></div></aside>
+          <aside class="overview-aside"><div class="section-heading"><h2>Work queue</h2></div><div id="queueSummary" aria-live="polite">Loading requests…</div></aside>
         </section>
-        <footer class="page-footer"><span>NORDBANK · INTERNAL BANKING PLATFORM</span><span>EDUCATIONAL SIMULATION</span></footer>
+        <footer class="page-footer"><span>BALTIC BANK · INTERNAL BANKING PLATFORM</span><span>EDUCATIONAL SIMULATION</span></footer>
       </div>
 
       <div id="clientsView" hidden>
@@ -85,7 +85,7 @@
           </div>
           <div class="results-card">
             <div class="table-head client-table-head"><span>CLIENT</span><span>CONTACT</span><span>STATUS</span></div>
-            <div id="clientResults" class="client-results">
+            <div id="directoryTools" class="directory-tools" hidden><label>Status <select id="directoryStatus"><option value="">All statuses</option><option>ACTIVE</option><option>REQUIRES_VERIFICATION</option><option>BLOCKED</option></select></label><span id="directoryPage"></span><button id="directoryPrev" type="button">Previous</button><button id="directoryNext" type="button">Next</button></div><div id="clientResults" class="client-results">
               <div class="empty-state search-empty"><span class="empty-mark"><i></i></span><strong>Start with a search</strong><p>Search by name, personal code, phone number, or email to open a client profile.</p></div>
             </div>
           </div>
@@ -93,7 +93,7 @@
         </div>
       </section>
 
-      <footer class="page-footer"><span>NORDBANK <i>·</i> INTERNAL BANKING PLATFORM</span></footer>
+      <footer class="page-footer"><span>BALTIC BANK <i>·</i> INTERNAL BANKING PLATFORM</span></footer>
       </div>
 
       <div id="staffView" hidden>
@@ -117,7 +117,7 @@
           </div>
           <div class="results-foot"><span><span class="foot-dot"></span> Changes take effect immediately</span><span>Passwords are set when an employee is created</span></div>
         </section>
-        <footer class="page-footer"><span>NORDBANK <i>·</i> INTERNAL BANKING PLATFORM</span></footer>
+        <footer class="page-footer"><span>BALTIC BANK <i>·</i> INTERNAL BANKING PLATFORM</span></footer>
       </div>
     </main>
   </div>

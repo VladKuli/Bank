@@ -77,7 +77,7 @@ public class CustomerBankingService {
         Account source = accounts.get(sourceId);
         Account target = accounts.get(targetId);
         if (!source.getOwner().getId().equals(sender.getId())) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Source account does not belong to you");
-        if (target.getOwner().getId().equals(sender.getId())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Choose an account belonging to another NordBank customer");
+        if (target.getOwner().getId().equals(sender.getId())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Choose an account belonging to another Baltic Bank customer");
         if (target.getOwner().getPasswordHash() == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Recipient is not registered for online banking");
         return accounts.transfer(sourceId, targetId, amount, description == null ? null : description.trim(), idempotencyKey);
     }

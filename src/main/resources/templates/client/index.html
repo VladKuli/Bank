@@ -2,36 +2,45 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/shell :: head('Your banking')}"></head>
 <body class="customer-app" data-start-page="dashboard">
+  <a class="skip-link" href="#customerPage">Skip to banking content</a>
   <div class="customer-shell">
     <aside class="customer-sidebar" id="customerSidebar">
-      <a class="customer-brand" href="/client/dashboard" data-page="dashboard"><span class="customer-brand-mark">N</span><span>NordBank<small>PERSONAL BANKING</small></span></a>
+      <a class="customer-brand" href="/client/dashboard" data-page="dashboard"><span class="customer-brand-mark">B</span><span>Baltic Bank<small>PERSONAL BANKING</small></span></a>
       <div class="customer-side-label">YOUR BANK</div>
       <nav class="customer-nav" aria-label="Customer navigation">
-        <a href="/client/dashboard" data-page="dashboard" class="selected"><span class="nav-symbol">⌂</span>Overview</a>
-        <a href="/client/accounts" data-page="accounts"><span class="nav-symbol">▤</span>Accounts</a>
-        <a href="/client/cards" data-page="cards"><span class="nav-symbol">▣</span>Cards</a>
-        <a href="/client/card-tiers" data-page="card-tiers"><span class="nav-symbol">✧</span>Membership</a>
-        <a href="/client/transfers" data-page="transfers"><span class="nav-symbol">⇄</span>Send money</a>
-        <a href="/client/transactions" data-page="transactions"><span class="nav-symbol">↗</span>Transactions</a>
-        <a href="/client/analytics" data-page="analytics"><span class="nav-symbol">▥</span>Insights</a>
+        <a href="/client/dashboard" data-page="dashboard" class="selected"><svg class="nav-symbol" aria-hidden="true"><use href="/css/navigation.svg#dashboard"/></svg>Overview</a>
+        <a href="/client/accounts" data-page="accounts"><svg class="nav-symbol" aria-hidden="true"><use href="/css/navigation.svg#accounts"/></svg>Accounts</a>
+        <a href="/client/cards" data-page="cards"><svg class="nav-symbol" aria-hidden="true"><use href="/css/navigation.svg#cards"/></svg>Cards</a>
+        <a href="/client/card-tiers" data-page="card-tiers"><svg class="nav-symbol" aria-hidden="true"><use href="/css/navigation.svg#card-tiers"/></svg>Membership</a>
+        <a href="/client/transfers" data-page="transfers"><svg class="nav-symbol" aria-hidden="true"><use href="/css/navigation.svg#transfers"/></svg>Send money</a>
+        <a href="/client/transactions" data-page="transactions"><svg class="nav-symbol" aria-hidden="true"><use href="/css/navigation.svg#transactions"/></svg>Transactions</a>
+        <a href="/client/analytics" data-page="analytics"><svg class="nav-symbol" aria-hidden="true"><use href="/css/navigation.svg#analytics"/></svg>Insights</a>
       </nav>
       <div class="customer-side-label secondary-label">MORE</div>
       <nav class="customer-nav customer-nav-secondary" aria-label="More services">
-        <a href="/client/loans" data-page="loans"><span class="nav-symbol">◫</span>Loans</a>
-        <a href="/client/support" data-page="support"><span class="nav-symbol">◇</span>Support</a>
-        <a href="/client/profile" data-page="profile"><span class="nav-symbol">◉</span>Profile</a>
+        <a href="/client/loans" data-page="loans"><svg class="nav-symbol" aria-hidden="true"><use href="/css/navigation.svg#loans"/></svg>Loans</a>
+        <a href="/client/support" data-page="support"><svg class="nav-symbol" aria-hidden="true"><use href="/css/navigation.svg#support"/></svg>Support</a>
+        <a href="/client/profile" data-page="profile"><svg class="nav-symbol" aria-hidden="true"><use href="/css/navigation.svg#profile"/></svg>Profile</a>
       </nav>
       
+      <div class="customer-sidebar-foot"><button data-page="profile" class="rail-action">My profile</button><button form="customerLogout" class="rail-action">Sign out</button></div>
     </aside>
     <main class="customer-main">
-      <header class="customer-topbar"><button class="mobile-nav-toggle" id="mobileNavToggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button><div class="customer-breadcrumb"><span>NordBank</span><i>/</i><strong id="customerPageTitle">Overview</strong></div><div class="customer-top-actions"><button class="customer-profile-button" id="customerProfileButton" type="button" aria-haspopup="true"><span class="customer-avatar" id="customerAvatar">N</span><span><strong id="customerShortName">Customer</strong><small id="customerTierBadge">STANDARD</small></span><span class="profile-chevron">⌄</span></button><div class="profile-popover" id="profilePopover" hidden><button type="button" data-page="profile">Your profile</button><form method="post" th:action="@{/logout/client}" id="customerLogout"><button type="submit">Sign out securely</button></form></div></div></header>
-      <div id="customerPage" class="customer-page" aria-live="polite"><div class="page-loading"><span></span>Loading your accounts…</div></div>
-      <footer class="customer-footer"><span>NORDBANK · PERSONAL BANKING</span><span>Educational banking simulation · No real payments</span></footer>
+      <header class="customer-topbar"><button class="mobile-nav-toggle" id="mobileNavToggle" aria-controls="customerSidebar" type="button" aria-label="Open navigation" aria-expanded="false">☰</button><button class="rail-toggle" id="railToggle" aria-label="Collapse navigation" aria-expanded="true">☰</button><div class="customer-breadcrumb"><span>Baltic Bank</span><i>/</i><strong id="customerPageTitle">Overview</strong></div><div class="customer-top-actions"><button id="findPage" class="find-page" aria-label="Find a banking service" aria-haspopup="dialog"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></svg><span>Find a service</span></button><button class="notice-button" id="noticeToggle" aria-controls="notices" aria-label="Request updates" aria-expanded="false"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5zM10 20q2 2 4 0"/></svg></button><div id="notices" class="profile-popover" hidden></div><button class="customer-profile-button" id="customerProfileButton" type="button" aria-expanded="false" aria-controls="profilePopover"><span class="customer-avatar" id="customerAvatar">B</span><span><strong id="customerShortName">Customer</strong><small id="customerTierBadge">STANDARD</small></span><span class="profile-chevron">⌄</span></button><div class="profile-popover" id="profilePopover" hidden><button type="button" data-page="profile">Your profile</button><form method="post" th:action="@{/logout/client}" id="customerLogout"><button type="submit">Sign out securely</button></form></div></div></header>
+      <div id="customerPage" class="customer-page" tabindex="-1" aria-live="polite"><div class="page-loading"><span></span>Loading your accounts…</div></div>
+      <footer class="customer-footer"><span>BALTIC BANK · PERSONAL BANKING</span><span>Educational banking simulation · No real payments</span></footer>
     </main>
   </div>
+  <nav class="mobile-tabs" aria-label="Quick navigation"><a href="/client/dashboard" data-page="dashboard"><svg class="nav-symbol" aria-hidden="true"><use href="/css/navigation.svg#dashboard"/></svg>Home</a><a href="/client/cards" data-page="cards"><svg class="nav-symbol" aria-hidden="true"><use href="/css/navigation.svg#cards"/></svg>Cards</a><a href="/client/transfers" data-page="transfers"><svg class="nav-symbol" aria-hidden="true"><use href="/css/navigation.svg#transfers"/></svg>Send</a><a href="/client/transactions" data-page="transactions"><svg class="nav-symbol" aria-hidden="true"><use href="/css/navigation.svg#transactions"/></svg>Activity</a></nav>
+  <dialog id="serviceFinder" class="customer-dialog service-finder" aria-labelledby="finderTitle">
+    <button type="button" class="dialog-close" data-close-dialog aria-label="Close search">×</button>
+    <h2 id="finderTitle">Find a service</h2>
+    <label class="field-stack"><span>Search your banking menu</span><input type="search" class="customer-input" id="serviceQuery" placeholder="Try cards, payments or support" autocomplete="off" autofocus></label>
+    <p class="finder-count" id="finderCount" role="status"></p><div id="serviceResults"></div>
+  </dialog>
   <div class="customer-toast" id="customerToast" role="status" aria-live="polite"></div>
   <dialog class="customer-dialog" id="transactionDialog"><button class="dialog-close" type="button" data-close-dialog aria-label="Close">×</button><div id="transactionDialogBody"></div></dialog>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
+  <script src="/js/chart.umd.min.js" defer></script>
   <script src="/js/customer.js" defer></script>
 </body>
 </html>
