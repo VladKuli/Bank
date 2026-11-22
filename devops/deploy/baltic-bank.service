@@ -1,0 +1,26 @@
+[Unit]
+Description=Baltic Bank
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+WorkingDirectory=/opt/baltic-bank/current
+EnvironmentFile=/opt/baltic-bank/current/database.env
+Environment=SPRING_PROFILES_ACTIVE=prod
+Environment=SERVER_ADDRESS=127.0.0.1
+Environment=SERVER_PORT=18080
+ExecStart=/opt/baltic-bank-jdk/bin/java -jar /opt/baltic-bank/current/app.jar
+Restart=on-failure
+RestartSec=5s
+SuccessExitStatus=143
+TimeoutStopSec=45
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectHome=yes
+ProtectSystem=strict
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
