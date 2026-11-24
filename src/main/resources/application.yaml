@@ -1,3 +1,21 @@
 spring:
   application:
     name: bank_system
+  web:
+    locale: en
+    locale-resolver: fixed
+  messages:
+    fallback-to-system-locale: false
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/bank}
+    username: ${DB_USERNAME:bank_admin}
+    password: ${DB_PASSWORD:admin}
+  flyway:
+    enabled: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+logging:
+  charset:
+    console: UTF-8

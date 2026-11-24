@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_PASSWORD: ci-only
+    tmpfs: [/var/lib/postgresql]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 45
+  tests:
+    image: ${BUILDER_IMAGE:?}
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/postgres
+      DB_USERNAME: postgres
+      DB_PASSWORD: ci-only
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["./gradlew", "--no-daemon", "test"]

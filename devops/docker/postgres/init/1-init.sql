@@ -7,6 +7,7 @@ CREATE DATABASE bank_test OWNER bank_admin;
 
 CREATE EXTENSION IF NOT EXISTS hstore WITH SCHEMA pg_catalog;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 \connect bank_test
 
