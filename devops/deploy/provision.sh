@@ -19,6 +19,7 @@ if [[ $(dpkg-query -W -f='${Status}' docker-ce-cli 2>/dev/null || true) == 'inst
 fi
 
 packages=()
+command -v sg >/dev/null || packages+=(util-linux-extra)
 command -v dockerd >/dev/null && command -v docker >/dev/null || packages+=("$engine")
 docker compose version >/dev/null 2>&1 || packages+=("$compose")
 docker buildx version >/dev/null 2>&1 || packages+=("$buildx")
