@@ -8,33 +8,30 @@ pipeline {
     }
     environment {
         BANK_DOMAIN = 'balticbank.duckdns.org'
-        ACME_EMAIL = 'goldydefault@gmail.com'
     }
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
                 script {
-                    env.REVISION = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                    def commit = sh(script: 'git rev-parse --short=12 HEAD', returnStdout: true).trim()
+                    env.RELEASE_TAG = "${commit}-${env.BUILD_NUMBER}"
                 }
             }
         }
-        stage('Prepare host') {
-            steps { sh 'bash devops/deploy/provision.sh "$BANK_DOMAIN" "$ACME_EMAIL"' }
+        stage('Prepare Docker') {
+            steps { sh 'bash devops/deploy/docker-job.sh prepare' }
         }
-        stage('Test and build JAR') {
-            steps { sh 'bash devops/deploy/build.sh' }
+        stage('Test and build image') {
+            steps { sh 'bash devops/deploy/docker-job.sh build' }
         }
-        stage('Deploy and verify HTTPS') {
+        stage('Deploy bank container') {
             steps {
                 withCredentials([
                     string(credentialsId: 'baltic-bank-db-url', variable: 'DB_URL'),
                     usernamePassword(credentialsId: 'baltic-bank-db', usernameVariable: 'DB_USERNAME', passwordVariable: 'DB_PASSWORD')
                 ]) {
-                    sh '''#!/usr/bin/env bash
-set -euo pipefail
-python3 devops/deploy/database_env.py | bash devops/deploy/release.sh "$REVISION" "$BANK_DOMAIN"
-'''
+                    sh 'bash devops/deploy/docker-job.sh deploy'
                 }
             }
         }

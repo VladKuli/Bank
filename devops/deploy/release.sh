@@ -1,51 +1,38 @@
 #!/usr/bin/env bash
 set -euo pipefail
-umask 077
-revision=$1
-domain=$2
-root=/opt/baltic-bank
+
+root=/opt/baltic-bank/containers
+export APP_IMAGE="baltic-bank:${RELEASE_TAG:?}"
+compose=(docker compose -f "$root/compose.yaml")
 exec 9>"$root/deploy.lock"
 flock -w 180 9
 
-ready() {
-    local url=$1
-    shift
-    for ((i=0; i<45; i++)); do
-        if [[ $(curl --silent --output /dev/null --write-out '%{http_code}' \
-                --connect-timeout 2 --max-time 4 "$@" "$url") == 200 ]]; then return 0; fi
-        sleep 2
-    done
-    return 1
-}
-
-activate() {
-    ln -sfnT "$1" "$root/current.next" || return 1
-    mv -Tf "$root/current.next" "$root/current" || return 1
-    sudo -n /usr/bin/systemctl restart baltic-bank.service
-}
-
-previous=$(readlink "$root/current" || true)
-release=$(mktemp -d "$root/releases/${revision:0:12}.XXXXXXXX")
-# systemd reads this file before switching to its dynamic service user.
-cat > "$release/database.env"
-for key in DB_URL DB_USERNAME DB_PASSWORD; do
-    grep -q "^$key=" "$release/database.env" || { echo "Missing $key" >&2; exit 1; }
-done
-mapfile -t jars < <(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-plain.jar')
-[[ ${#jars[@]} == 1 && -f ${jars[0]} ]]
-install -m 0644 "${jars[0]}" "$release/app.jar"
-chmod 0755 "$release"
-if activate "$release" && ready http://127.0.0.1:18080/login/client &&
-   ready "https://$domain/login/client" --resolve "$domain:443:127.0.0.1"; then
-    echo "Deployed $revision at https://$domain"
-    exit 0
+install -m 0644 devops/deploy/compose.yaml "$root/compose.next"
+mv -f "$root/compose.next" "$root/compose.yaml"
+docker image inspect "$APP_IMAGE" >/dev/null
+container=$("${compose[@]}" ps -aq app)
+previous=''
+if [[ -n $container ]]; then
+    previous=$(docker inspect --format '{{.Config.Image}}' "$container")
 fi
-echo 'Health check failed. Inspect journalctl -u baltic-bank.service.' >&2
-if [[ -n $previous ]]; then
-    activate "$previous"
-    ready http://127.0.0.1:18080/login/client
-else
-    sudo -n /usr/bin/systemctl stop baltic-bank.service
-    rm -f "$root/current"
+
+if "${compose[@]}" up -d --wait --wait-timeout 150 &&
+   curl -fsS --max-time 5 http://127.0.0.1:18081/login/client >/dev/null; then
+    if [[ ! -f $root/nginx-active ]]; then
+        echo 'Container ready on 127.0.0.1:18081. Activate its Nginx site once to direct public traffic here.'
+        exit 0
+    fi
+    if curl -fsS --max-time 10 --resolve "$BANK_DOMAIN:443:127.0.0.1" "https://$BANK_DOMAIN/login/client" >/dev/null; then
+        echo "Deployed $APP_IMAGE"
+        exit 0
+    fi
+fi
+
+echo 'Release verification failed.' >&2
+if [[ -n $previous && $previous != "$APP_IMAGE" ]]; then
+    export APP_IMAGE=$previous
+    "${compose[@]}" up -d --wait --wait-timeout 150
+elif [[ -z $previous ]]; then
+    "${compose[@]}" stop app
 fi
 exit 1

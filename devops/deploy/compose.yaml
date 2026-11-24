@@ -1,0 +1,28 @@
+name: baltic-bank
+services:
+  app:
+    image: ${APP_IMAGE:?Build the application image first}
+    restart: unless-stopped
+    # Linux host networking keeps the existing loopback-only PostgreSQL reachable.
+    network_mode: host
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_ADDRESS: 127.0.0.1
+      SERVER_PORT: "18081"
+      DB_URL: ${DB_URL:?Missing JDBC URL}
+      DB_USERNAME: ${DB_USERNAME:?Missing database user}
+      DB_PASSWORD: ${DB_PASSWORD:?Missing database password}
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:18081/login/client"]
+      interval: 5s
+      timeout: 3s
+      retries: 18
+      start_period: 15s
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
